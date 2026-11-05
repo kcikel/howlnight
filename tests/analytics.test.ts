@@ -34,7 +34,7 @@ describe('analytics', () => {
     const s = document.getElementById('gc-script') as HTMLScriptElement | null
     expect(s).toBeTruthy()
     expect(s!.dataset.goatcounter).toBe('https://howlnight.goatcounter.com/count')
-    expect(s!.src).toContain('gc.zgo.at/count.js')
+    expect(s!.src).toBe('https://gc.zgo.at/count.js')
     // idempotent
     initAnalytics()
     expect(document.querySelectorAll('#gc-script').length).toBe(1)

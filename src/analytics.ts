@@ -36,7 +36,7 @@ function ensureGoatCounter(): void {
     s.id = 'gc-script'
     s.async = true
     s.dataset.goatcounter = GOATCOUNTER_ENDPOINT
-    s.src = '//gc.zgo.at/count.js'
+    s.src = 'https://gc.zgo.at/count.js'
     // Ad blockers / offline: failed load must not break the app
     s.onerror = () => {
       /* ignore */
