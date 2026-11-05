@@ -11,7 +11,7 @@ type Dict = Record<string, string>
 const en: Dict = {
   appName: 'Howlnight',
   tagline: 'The moon rises. The village listens.',
-  landingTitle: 'Party Werewolf — no human narrator',
+  landingTitle: 'Party Werewolf',
   landingBody:
     'Gather 4–20 friends. Create a multi-phone room (each player on their own screen) or pass one phone. Howlnight deals secret roles, narrates every night, and runs the day vote.',
   ctaStart: 'Start a night',
@@ -187,7 +187,7 @@ const en: Dict = {
 const es: Dict = {
   ...en,
   tagline: 'La luna sube. El pueblo escucha.',
-  landingTitle: 'Hombre lobo en fiesta — sin narrador humano',
+  landingTitle: 'Hombre lobo en fiesta',
   landingBody:
     'Reuní de 4 a 20 amigos. Creá una sala multi-teléfono (cada uno en su pantalla) o pasá un solo teléfono. Howlnight reparte roles, narra la noche y lleva la votación.',
   ctaStart: 'Empezar una noche',
@@ -361,7 +361,7 @@ const es: Dict = {
 const pt: Dict = {
   ...en,
   tagline: 'A lua sobe. A vila escuta.',
-  landingTitle: 'Lobisomem em festa — sem narrador humano',
+  landingTitle: 'Lobisomem em festa',
   landingBody:
     'Reúna de 4 a 20 amigos. Crie uma sala multi-celular (cada um na sua tela) ou passe um só telefone. Howlnight distribui papéis, narra a noite e conduz a votação.',
   ctaStart: 'Começar uma noite',

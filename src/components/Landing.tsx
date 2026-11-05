@@ -15,6 +15,7 @@ export function Landing({ t, onPassPhone, onCreateRoom, onJoinRoom, onPro }: Pro
       <MoonArt />
       <section class="landing-intro">
         <h1 class="landing-title">{t('landingTitle')}</h1>
+        <p class="landing-tagline">{t('tagline')}</p>
         <p class="lead">{t('landingBody')}</p>
       </section>
       <nav class="landing-actions" aria-label={t('appName')}>
@@ -27,9 +28,8 @@ export function Landing({ t, onPassPhone, onCreateRoom, onJoinRoom, onPro }: Pro
         <button class="btn btn-block" type="button" onClick={onPassPhone}>
           {t('ctaPassPhone')}
         </button>
-        <ProComingSoonButton t={t} onOpen={onPro} className="btn-quiet btn-block" />
+        <ProComingSoonButton t={t} onOpen={onPro} className="btn-quiet pro-link" />
       </nav>
-      <p class="install-hint">{t('installHint')}</p>
       <section class="how">
         <h2 class="how-title">{t('ctaHow')}</h2>
         <ol class="how-list">
@@ -38,6 +38,7 @@ export function Landing({ t, onPassPhone, onCreateRoom, onJoinRoom, onPro }: Pro
           <li>{t('how3')}</li>
           <li>{t('how4')}</li>
         </ol>
+        <p class="install-hint">{t('installHint')}</p>
       </section>
     </div>
   )

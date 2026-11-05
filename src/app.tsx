@@ -248,6 +248,11 @@ export function App() {
 
   const phase = game?.phase
 
+  // Each new screen or phase starts at the top of the page (no landing mid-scroll).
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [screen, phase, showRules])
+
   const body = useMemo(() => {
     if (screen === 'landing') {
       return (
@@ -549,12 +554,15 @@ export function App() {
           </button>
         </div>
       </header>
-      {showRules && (
-        <div class="stack">
-          <RulesHelp t={t} onClose={() => setShowRules(false)} />
-        </div>
-      )}
-      {!showRules && body}
+      <main class="screen" key={showRules ? 'rules' : screen}>
+        {showRules ? (
+          <div class="stack">
+            <RulesHelp t={t} onClose={() => setShowRules(false)} />
+          </div>
+        ) : (
+          body
+        )}
+      </main>
       {showPro && (
         <ProUpsell t={t} onBack={() => setShowPro(false)} />
       )}

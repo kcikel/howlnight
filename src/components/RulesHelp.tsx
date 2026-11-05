@@ -41,7 +41,7 @@ export function RulesHelp({ t, onClose }: Props) {
             <strong>
               {t(`role_${id}`)}
               {PREMIUM_ROLES.includes(id) || ROLES[id].premium ? ` (${t('premium')})` : ''}
-            </strong>
+            </strong>{' '}
             — {t(`desc_${id}`)}
           </li>
         ))}

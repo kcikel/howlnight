@@ -21,6 +21,11 @@
   --rule-strong: rgba(236, 225, 198, 0.55);
   --tint: rgba(236, 225, 198, 0.04);
   --plate: #070d1c;       /* darkest uncut block in the woodcut */
+  --crimson: var(--blood); /* legacy name used by inline error text */
+
+  /* rhythm: 4px base, used for every gap and pad */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --press: cubic-bezier(0.2, 0.7, 0.3, 1);
 
   --font-display: 'Howl Figures', 'IM Fell English', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-text: 'Alegreya Sans', 'Gill Sans', 'Trebuchet MS', sans-serif;
@@ -82,7 +87,6 @@ body {
   background-image:
     var(--grain),
     radial-gradient(120% 70% at 50% 110%, rgba(234, 165, 63, 0.10), transparent 60%);
-  background-attachment: fixed;
   transition: background-color 0.6s ease, color 0.6s ease;
   -webkit-font-smoothing: antialiased;
   font-kerning: normal;
@@ -100,9 +104,9 @@ h1, h2, h3 {
   letter-spacing: 0;
   text-wrap: balance;
 }
-h1 { font-size: 2.25rem; }
-h2 { font-size: 1.75rem; }
-h3 { font-size: 1.35rem; }
+h1 { font-size: 2.6rem; }
+h2 { font-size: 1.85rem; }
+h3 { font-size: 1.4rem; }
 p { text-wrap: pretty; }
 
 button, input, select { font: inherit; color: inherit; }
@@ -120,10 +124,10 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   max-width: 440px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: 12px 18px calc(28px + env(safe-area-inset-bottom));
+  padding: calc(var(--s2) + env(safe-area-inset-top)) 18px calc(var(--s5) + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--s4);
   position: relative;
 }
 
@@ -131,8 +135,9 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 10px;
+  gap: var(--s3);
+  min-height: 52px;
+  padding-bottom: var(--s2);
   border-bottom: 1px solid var(--rule);
 }
 .brand {
@@ -143,14 +148,15 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   min-height: 44px;
   min-width: 0;
 }
-.brand-mark { width: 34px; height: 34px; flex: none; }
+.brand-mark { width: 30px; height: 30px; flex: none; }
 .bm-ring { fill: none; stroke: var(--rule-strong); stroke-width: 1; }
 .bm-moon { fill: var(--ink); }
 .bm-cut { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; }
 .brand-name {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   line-height: 1;
+  white-space: nowrap;
 }
 .brand-tagline {
   font-family: var(--font-display);
@@ -158,9 +164,14 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   font-size: 0.82rem;
   line-height: 1.2;
   color: var(--ink-soft);
-  margin-top: 2px;
+  margin-top: 3px;
+  white-space: nowrap;
 }
-.top-actions { display: flex; gap: 6px; align-items: center; flex: none; }
+/* On phones the tagline lives on the home screen instead of the masthead */
+@media (max-width: 559px) {
+  .brand-tagline { display: none; }
+}
+.top-actions { display: flex; gap: var(--s1); align-items: center; flex: none; }
 
 .select-lang {
   appearance: none;
@@ -176,8 +187,10 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   background-repeat: no-repeat;
   color: var(--ink);
   font-size: 0.95rem;
-  max-width: 104px;
+  max-width: 112px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
+@media (hover: hover) { .select-lang:hover { background-color: var(--tint); } }
 .select-lang option { background: var(--paper); color: var(--ink); }
 
 /* ---------- buttons ---------- */
@@ -190,8 +203,16 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   font-weight: 500;
   line-height: 1.2;
   color: var(--ink);
-  transition: transform 0.08s ease, background-color 0.15s ease, color 0.15s ease;
+  transition:
+    transform 0.14s var(--press),
+    box-shadow 0.14s var(--press),
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    filter 0.18s ease;
   touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .btn, .chip {
   background: transparent;
@@ -237,10 +258,28 @@ body:has(.day-scene) :focus-visible { outline-color: var(--blood); }
   font-size: 1.1rem;
   color: var(--ink-soft);
 }
-.btn:active:not(:disabled), .btn-primary:active:not(:disabled), .btn-danger:active:not(:disabled),
-.chip:active:not(:disabled) { transform: translateY(1px); }
+/* Press = the block meets the paper: it sinks 1px and the inner frame rule tightens */
+.btn:active:not(:disabled), .chip:active:not(:disabled), .stepper button:active:not(:disabled),
+.player-pick button:active:not(:disabled) {
+  transform: translateY(1px);
+  background-color: color-mix(in srgb, var(--ink) 10%, transparent);
+  transition-duration: 0.04s;
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: brightness(0.94);
+  box-shadow: inset 0 0 0 5px var(--accent), inset 0 0 0 6px color-mix(in srgb, var(--accent-ink) 55%, transparent);
+  transition-duration: 0.04s;
+}
+.btn-danger:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: brightness(0.94);
+  box-shadow: inset 0 0 0 5px var(--blood), inset 0 0 0 6px color-mix(in srgb, var(--paper-deep) 55%, transparent);
+  transition-duration: 0.04s;
+}
+.btn-ghost:active:not(:disabled), .btn-quiet:active:not(:disabled) { color: var(--ink); }
 .btn-block { width: 100%; display: block; text-align: center; }
-button:disabled { opacity: 0.42; cursor: not-allowed; }
+button:disabled { opacity: 0.42; cursor: not-allowed; filter: saturate(0.6); }
 
 .chip { min-height: 44px; min-width: 44px; padding: 8px 14px; font-size: 1rem; }
 .chip-icon {
@@ -266,17 +305,35 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   border-radius: 2px;
   padding: 20px 18px;
 }
-.panel h1, .panel h2, .panel h3 { margin: 0 0 4px; }
+.panel h1, .panel h2, .panel h3 { margin: 0; }
 .panel.day-scene { background: transparent; border-width: 1px 0; padding-inline: 2px; }
 .muted { color: var(--ink-soft); }
 .lead { font-size: 1.08rem; line-height: 1.55; color: var(--ink-soft); }
 
-.stack { display: flex; flex-direction: column; gap: 14px; }
+.stack { display: flex; flex-direction: column; gap: var(--s4); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .space { flex: 1; }
 
+/* ---------- screen composition ----------
+   Single-leaf screens (role card, night, dawn, day, elimination) fill the
+   viewport: the news sits in the optical middle, the action lands in the
+   thumb zone at the bottom, so the phone can be passed without hunting. */
+.screen { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.screen > * { animation: leaf-in 0.26s ease-out both; }
+@keyframes leaf-in { from { opacity: 0; } to { opacity: 1; } }
+.screen > .stack:has(> .panel.stack:only-child .moon-pulse, > .panel.stack:only-child .reveal-gate, > .panel.stack:only-child .role-reveal, > .panel.day-scene:only-child),
+.screen > .stack > .panel.stack:only-child:is(.day-scene, :has(.moon-pulse, .reveal-gate, .role-reveal)),
+.screen > .panel.stack:is(.day-scene, :has(.moon-pulse, .reveal-gate, .role-reveal)) { flex: 1; }
+.screen .panel.stack:is(.day-scene, :has(.moon-pulse, .reveal-gate, .role-reveal)) > :is(button, .row):last-child { margin-top: auto; }
+/* centre the content block between heading and action */
+.screen > .panel.day-scene:has(> :is(button, .row):last-child) > h2 + * { margin-top: auto; }
+.screen .panel.stack > div:has(> .moon-pulse) { margin-top: auto; }
+.screen .reveal-gate, .screen .role-reveal { flex: 1; }
+.role-reveal > .emoji { margin-top: auto; }
+.role-reveal > .btn-primary { margin-top: auto; }
+
 /* ---------- landing ---------- */
-.landing { display: flex; flex-direction: column; gap: 20px; }
+.landing { display: flex; flex-direction: column; gap: var(--s5); }
 .hero-art {
   margin: -18px -18px 0;
   height: 268px;
@@ -305,26 +362,46 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 .wc-windows rect { fill: var(--accent); }
 .wc-wolf { fill: var(--paper); stroke: var(--ink); stroke-width: 0.9; stroke-opacity: 0.45; stroke-linejoin: round; }
 
-.landing-intro { margin-top: -30px; position: relative; }
+.landing-intro { margin-top: calc(var(--s6) * -1); position: relative; }
 .landing-title {
-  font-size: 2.6rem;
-  line-height: 1.02;
-  margin: 0 0 14px;
-  max-width: 13ch;
+  font-size: 3.4rem;
+  line-height: 0.95;
+  margin: 0;
+  max-width: 9ch;
+}
+.landing-tagline {
+  margin: var(--s2) 0 var(--s4);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  color: var(--accent);
 }
 .landing-intro .lead { margin: 0; max-width: 34ch; }
-.landing-actions { display: flex; flex-direction: column; gap: 10px; }
-.landing-actions .btn-primary { min-height: 56px; font-size: 1.12rem; }
+.landing-actions { display: flex; flex-direction: column; gap: var(--s2); }
+.landing-actions .btn-primary { min-height: 56px; font-size: 1.12rem; margin-bottom: var(--s1); }
+.pro-link {
+  align-self: center;
+  margin-top: var(--s1);
+  padding: 10px var(--s4);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 5px;
+}
+@media (hover: hover) { .pro-link:hover { color: var(--ink); text-decoration-color: currentColor; } }
 .install-hint {
-  margin: -6px 0 0;
+  margin: var(--s5) 0 0;
+  padding-top: var(--s3);
+  border-top: 1px dotted var(--rule-strong);
   font-family: var(--font-display);
   font-style: italic;
   color: var(--ink-soft);
-  font-size: 0.98rem;
-  text-align: center;
+  font-size: 1rem;
+  line-height: 1.4;
 }
-.how { border-top: 1px solid var(--rule); padding-top: 16px; }
-.how-title { margin: 0 0 10px; font-size: 1.6rem; }
+.how { border-top: 1px solid var(--rule); padding-top: var(--s5); }
+.how-title { margin: 0 0 var(--s4); font-size: 1.85rem; }
 .how-list {
   list-style: none;
   counter-reset: how;
@@ -365,6 +442,7 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 }
 .player-row input:focus, .room-input:focus { border-bottom-color: var(--accent); box-shadow: 0 1.5px 0 var(--accent); }
 .room-input {
+  flex: 0 0 auto;
   width: 100%;
   text-transform: uppercase;
   letter-spacing: 0.2em;
@@ -423,7 +501,7 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 
 .reveal-gate, .role-reveal {
   position: relative;
-  min-height: 440px;
+  min-height: 420px;
   border-radius: 6px;
   border: 1px solid var(--rule-strong);
   box-shadow: inset 0 0 0 7px var(--paper-deep), inset 0 0 0 8px var(--rule-strong);
@@ -487,8 +565,8 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   line-height: 1;
 }
 .role-reveal[data-role='werewolf'] h2 { color: var(--blood); }
-.role-reveal .lead { margin: 6px 0 22px; max-width: 28ch; }
-.role-reveal .btn-primary { margin-top: auto; }
+.role-reveal .lead { margin: var(--s2) 0 var(--s5); max-width: 28ch; }
+.role-reveal .btn-primary { align-self: stretch; }
 @keyframes card-turn {
   from { transform: perspective(900px) rotateY(-88deg); opacity: 0.2; }
   to { transform: perspective(900px) rotateY(0); opacity: 1; }
@@ -524,9 +602,11 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   line-height: 1.35;
   text-align: center;
   color: var(--ink);
-  min-height: 3.2em;
-  margin: 4px 0;
+  min-height: 2.7em;
+  margin: 0 auto;
+  max-width: 24ch;
 }
+.panel.day-scene > .narration { font-size: 1.6rem; }
 
 .player-pick {
   display: grid;
@@ -542,15 +622,33 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   font-weight: 500;
   background: transparent;
 }
+.player-pick button { transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.14s var(--press); }
 .player-pick button.selected {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
   font-weight: 700;
+  animation: stamp 0.22s var(--press);
 }
+@keyframes stamp { from { transform: scale(0.96); } to { transform: scale(1); } }
 .player-pick button.dead { opacity: 0.4; text-decoration: line-through; }
 
 /* ---------- day ---------- */
+.day-scene h3 { font-size: 2rem; }
+/* Day leaves read like a notice nailed to the well: set centred */
+.panel.day-scene { text-align: center; }
+.panel.day-scene > .row { justify-content: center; }
+.panel.day-scene > .muted { max-width: 30ch; margin-inline: auto; }
+.panel.day-scene .log-list { max-height: none; overflow: visible; }
+.panel.day-scene .log-list li {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  line-height: 1.25;
+  color: var(--ink);
+  border: 0;
+  padding: var(--s1) 0;
+}
+.panel.day-scene .log-list li strong { font-weight: 400; }
 .timer {
   font-family: var(--font-display);
   font-size: 5.5rem;
