@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks'
 import { startAmbient, stopAmbient } from './audio/ambient'
-import { isSpeechMuted, setSpeechMuted, stopSpeaking } from './audio/speech'
+import { isSpeechMuted, setSpeechMuted, stopSpeaking, unlockAudio, prefetchVoice } from './audio/speech'
 import { BrandMark } from './components/MoonArt'
 import {
   DawnScreen,
@@ -54,6 +54,41 @@ export function App() {
   useEffect(() => {
     document.title = t('seoTitle')
   }, [t])
+
+  useEffect(() => {
+    const unlock = () => unlockAudio()
+    window.addEventListener('pointerdown', unlock, { once: true, passive: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!voiceOn) return
+    prefetchVoice(lang, [
+      'nightFalls',
+      'everyoneSleep',
+      'dawnTitle',
+      'wake',
+      'role_werewolf',
+      'role_seer',
+      'role_doctor',
+      'role_witch',
+      'role_cupid',
+      'role_spy',
+      'wolvesChoose',
+      'seerChoose',
+      'doctorChoose',
+      'witchHealAsk',
+      'witchPoisonAsk',
+      'cupidChoose',
+      'spyChoose',
+      'visionWolf',
+      'visionVillager',
+    ])
+  }, [lang, voiceOn])
 
   const toggleVoice = () => {
     const next = !voiceOn

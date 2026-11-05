@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks'
 import type { GameState, RoleId } from '../engine'
 import { livingPlayers, nightWakeOrder, playersWithRole } from '../engine'
 import type { Lang } from '../i18n/messages'
-import { speak } from '../audio/speech'
+import { speakKeys, speakParts, type SpeakPart, unlockAudio } from '../audio/speech'
 
 interface Props {
   state: GameState
@@ -30,37 +30,103 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
   const [witchHealChoice, setWitchHealChoice] = useState<boolean | null>(null)
   const step = steps[si]
 
-  const narration = useMemo(() => {
-    if (!step) return ''
-    if (step.kind === 'intro') return `${t('nightFalls')} ${t('everyoneSleep')}`
-    if (step.kind === 'done') return t('dawnTitle')
+  const { narration, voiceParts, fallbackText } = useMemo(() => {
+    const empty = { narration: '', voiceParts: [] as SpeakPart[], fallbackText: '' }
+    if (!step) return empty
+    if (step.kind === 'intro') {
+      const narration = `${t('nightFalls')} ${t('everyoneSleep')}`
+      return {
+        narration,
+        voiceParts: [
+          { type: 'clip' as const, key: 'nightFalls' },
+          { type: 'clip' as const, key: 'everyoneSleep' },
+        ],
+        fallbackText: narration,
+      }
+    }
+    if (step.kind === 'done') {
+      const narration = t('dawnTitle')
+      return {
+        narration,
+        voiceParts: [{ type: 'clip' as const, key: 'dawnTitle' }],
+        fallbackText: narration,
+      }
+    }
     if (step.kind === 'seer_result') {
       const v = state.seerLastVision
-      if (!v) return ''
+      if (!v) return empty
       const name = state.players.find((p) => p.id === v.targetId)?.name ?? ''
-      return `${name} ${v.isWolf ? t('visionWolf') : t('visionVillager')}`
+      const suffixKey = v.isWolf ? 'visionWolf' : 'visionVillager'
+      const narration = `${name} ${t(suffixKey)}`
+      // Name via Web Speech; fixed suffix via neural clip
+      return {
+        narration,
+        voiceParts: [
+          { type: 'text' as const, text: name },
+          { type: 'clip' as const, key: suffixKey },
+        ],
+        fallbackText: narration,
+      }
     }
-    const prompts: Record<RoleId, string> = {
-      werewolf: t('wolvesChoose'),
-      seer: t('seerChoose'),
-      doctor: t('doctorChoose'),
-      witch: t('witchHealAsk'),
-      hunter: '',
-      villager: '',
-      cupid: t('cupidChoose'),
-      spy: t('spyChoose'),
+    const prompts: Partial<Record<RoleId, string>> = {
+      werewolf: 'wolvesChoose',
+      seer: 'seerChoose',
+      doctor: 'doctorChoose',
+      witch: 'witchHealAsk',
+      cupid: 'cupidChoose',
+      spy: 'spyChoose',
     }
-    return `${t('wake')} ${t(`role_${step.role}`)}. ${prompts[step.role]}`
+    const promptKey = prompts[step.role]
+    const roleKey = `role_${step.role}`
+    const promptText = promptKey ? t(promptKey) : ''
+    const narration = `${t('wake')} ${t(roleKey)}. ${promptText}`.trim()
+    const voiceParts: SpeakPart[] = [
+      { type: 'clip', key: 'wake' },
+      { type: 'clip', key: roleKey },
+    ]
+    if (promptKey) voiceParts.push({ type: 'clip', key: promptKey })
+    return { narration, voiceParts, fallbackText: narration }
   }, [step, t, state.seerLastVision, state.players, lang])
 
   useEffect(() => {
-    if (voiceOn && narration) void speak(narration, lang)
+    if (voiceOn && voiceParts.length) {
+      void speakParts(voiceParts, lang, fallbackText)
+    }
   }, [si, narration, voiceOn, lang])
 
   useEffect(() => {
     setSelected([])
     setWitchHealChoice(null)
   }, [si])
+
+  const witchPhase =
+    step && step.kind === 'role' && step.role === 'witch'
+      ? witchHealChoice === null && state.witch.healLeft && state.nightActions.werewolfTarget
+        ? 'heal'
+        : 'poison'
+      : null
+
+  useEffect(() => {
+    if (voiceOn && witchPhase === 'poison') {
+      void speakKeys(['witchPoisonAsk'], lang, t('witchPoisonAsk'))
+    }
+  }, [witchPhase, voiceOn, lang, t])
+
+  // Speak seer vision when a target is picked (name via Web Speech + neural suffix)
+  useEffect(() => {
+    if (!voiceOn || !step || step.kind !== 'role' || step.role !== 'seer' || !selected[0]) return
+    const target = state.players.find((p) => p.id === selected[0])
+    if (!target) return
+    const suffix = target.role === 'werewolf' ? 'visionWolf' : 'visionVillager'
+    void speakParts(
+      [
+        { type: 'text', text: target.name },
+        { type: 'clip', key: suffix },
+      ],
+      lang,
+      `${target.name} ${t(suffix)}`,
+    )
+  }, [selected[0], voiceOn, lang])
 
   if (!step) return null
 
@@ -79,6 +145,7 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
                 key={p.id}
                 class={on ? 'selected' : ''}
                 onClick={() => {
+                  unlockAudio()
                   if (multi) {
                     if (on) setSelected(selected.filter((x) => x !== p.id))
                     else if (selected.length < 2) setSelected([...selected, p.id])
@@ -95,6 +162,7 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
   }
 
   function advance() {
+    unlockAudio()
     setSi((x) => Math.min(x + 1, steps.length - 1))
   }
 
@@ -133,20 +201,11 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
       if (witchHealChoice === false && selected[0] && state.witch.poisonLeft) {
         onPatch({ witchPoisonTarget: selected[0] })
       }
-      // two-phase handled in render
       advance()
       return
     }
     advance()
   }
-
-  // Witch UI is two-phase within the role step
-  const witchPhase =
-    step.kind === 'role' && step.role === 'witch'
-      ? witchHealChoice === null && state.witch.healLeft && state.nightActions.werewolfTarget
-        ? 'heal'
-        : 'poison'
-      : null
 
   return (
     <div class="stack">

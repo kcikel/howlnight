@@ -1,0 +1,464 @@
+{
+  "engine": "piper-tts",
+  "format": "mp3",
+  "bitrate": "56k",
+  "voices": {
+    "en": {
+      "id": "en_US-norman-medium",
+      "license": "public domain (LibriVox dataset)",
+      "quality": "medium"
+    },
+    "es": {
+      "id": "es_MX-claude-high",
+      "license": "Apache-2.0",
+      "quality": "high"
+    },
+    "pt": {
+      "id": "pt_BR-jeff-medium",
+      "license": "CC0 (OHF-Voice voice-datasets)",
+      "quality": "medium"
+    }
+  },
+  "keys": [
+    "nightFalls",
+    "everyoneSleep",
+    "dawnTitle",
+    "wake",
+    "role_werewolf",
+    "role_seer",
+    "role_doctor",
+    "role_witch",
+    "role_cupid",
+    "role_spy",
+    "wolvesChoose",
+    "seerChoose",
+    "doctorChoose",
+    "witchHealAsk",
+    "witchPoisonAsk",
+    "cupidChoose",
+    "spyChoose",
+    "visionWolf",
+    "visionVillager",
+    "nobodyDied",
+    "foundDead",
+    "eliminated",
+    "survivedVote",
+    "hunterShot",
+    "winners_wolves",
+    "winners_village",
+    "winners_lovers"
+  ],
+  "files": {
+    "en": {
+      "nightFalls": {
+        "file": "nightFalls.mp3",
+        "bytes": 11928,
+        "text": "Night falls on the village…"
+      },
+      "everyoneSleep": {
+        "file": "everyoneSleep.mp3",
+        "bytes": 15951,
+        "text": "Everyone, close your eyes."
+      },
+      "dawnTitle": {
+        "file": "dawnTitle.mp3",
+        "bytes": 49597,
+        "text": "Dawn."
+      },
+      "wake": {
+        "file": "wake.mp3",
+        "bytes": 12294,
+        "text": "Wake up:"
+      },
+      "role_werewolf": {
+        "file": "role_werewolf.mp3",
+        "bytes": 9368,
+        "text": "Werewolf."
+      },
+      "role_seer": {
+        "file": "role_seer.mp3",
+        "bytes": 9186,
+        "text": "Seer."
+      },
+      "role_doctor": {
+        "file": "role_doctor.mp3",
+        "bytes": 20523,
+        "text": "Doctor."
+      },
+      "role_witch": {
+        "file": "role_witch.mp3",
+        "bytes": 6808,
+        "text": "Witch."
+      },
+      "role_cupid": {
+        "file": "role_cupid.mp3",
+        "bytes": 5894,
+        "text": "Cupid."
+      },
+      "role_spy": {
+        "file": "role_spy.mp3",
+        "bytes": 46671,
+        "text": "Spy."
+      },
+      "wolvesChoose": {
+        "file": "wolvesChoose.mp3",
+        "bytes": 17048,
+        "text": "Werewolves, choose your prey."
+      },
+      "seerChoose": {
+        "file": "seerChoose.mp3",
+        "bytes": 18877,
+        "text": "Seer, choose someone to inspect."
+      },
+      "doctorChoose": {
+        "file": "doctorChoose.mp3",
+        "bytes": 19243,
+        "text": "Doctor, choose someone to protect."
+      },
+      "witchHealAsk": {
+        "file": "witchHealAsk.mp3",
+        "bytes": 26191,
+        "text": "Witch — the wolves struck. Use your heal potion?"
+      },
+      "witchPoisonAsk": {
+        "file": "witchPoisonAsk.mp3",
+        "bytes": 15586,
+        "text": "Witch — use your poison on someone?"
+      },
+      "cupidChoose": {
+        "file": "cupidChoose.mp3",
+        "bytes": 14854,
+        "text": "Cupid, choose two lovers."
+      },
+      "spyChoose": {
+        "file": "spyChoose.mp3",
+        "bytes": 19243,
+        "text": "Spy, choose someone to peek at."
+      },
+      "visionWolf": {
+        "file": "visionWolf.mp3",
+        "bytes": 6260,
+        "text": "is a Werewolf."
+      },
+      "visionVillager": {
+        "file": "visionVillager.mp3",
+        "bytes": 7906,
+        "text": "is NOT a Werewolf."
+      },
+      "nobodyDied": {
+        "file": "nobodyDied.mp3",
+        "bytes": 21803,
+        "text": "The village wakes. Nobody died tonight."
+      },
+      "foundDead": {
+        "file": "foundDead.mp3",
+        "bytes": 9551,
+        "text": "Found dead this morning."
+      },
+      "eliminated": {
+        "file": "eliminated.mp3",
+        "bytes": 8454,
+        "text": "Eliminated."
+      },
+      "survivedVote": {
+        "file": "survivedVote.mp3",
+        "bytes": 12111,
+        "text": "The village could not decide."
+      },
+      "hunterShot": {
+        "file": "hunterShot.mp3",
+        "bytes": 13757,
+        "text": "Hunter — choose your dying shot."
+      },
+      "winners_wolves": {
+        "file": "winners_wolves.mp3",
+        "bytes": 8454,
+        "text": "Werewolves win."
+      },
+      "winners_village": {
+        "file": "winners_village.mp3",
+        "bytes": 9368,
+        "text": "Village wins."
+      },
+      "winners_lovers": {
+        "file": "winners_lovers.mp3",
+        "bytes": 8454,
+        "text": "Lovers win."
+      }
+    },
+    "es": {
+      "nightFalls": {
+        "file": "nightFalls.mp3",
+        "bytes": 14306,
+        "text": "La noche cae sobre el pueblo…"
+      },
+      "everyoneSleep": {
+        "file": "everyoneSleep.mp3",
+        "bytes": 13940,
+        "text": "Todos, cierren los ojos."
+      },
+      "dawnTitle": {
+        "file": "dawnTitle.mp3",
+        "bytes": 6443,
+        "text": "Amanecer."
+      },
+      "wake": {
+        "file": "wake.mp3",
+        "bytes": 9003,
+        "text": "Despierta:"
+      },
+      "role_werewolf": {
+        "file": "role_werewolf.mp3",
+        "bytes": 7174,
+        "text": "Hombre lobo."
+      },
+      "role_seer": {
+        "file": "role_seer.mp3",
+        "bytes": 6443,
+        "text": "Vidente."
+      },
+      "role_doctor": {
+        "file": "role_doctor.mp3",
+        "bytes": 5894,
+        "text": "Doctor."
+      },
+      "role_witch": {
+        "file": "role_witch.mp3",
+        "bytes": 6260,
+        "text": "Bruja."
+      },
+      "role_cupid": {
+        "file": "role_cupid.mp3",
+        "bytes": 6260,
+        "text": "Cupido."
+      },
+      "role_spy": {
+        "file": "role_spy.mp3",
+        "bytes": 6443,
+        "text": "Espía."
+      },
+      "wolvesChoose": {
+        "file": "wolvesChoose.mp3",
+        "bytes": 19608,
+        "text": "Hombres lobo, elijan a su presa."
+      },
+      "seerChoose": {
+        "file": "seerChoose.mp3",
+        "bytes": 21803,
+        "text": "Vidente, elegí a quién inspeccionar."
+      },
+      "doctorChoose": {
+        "file": "doctorChoose.mp3",
+        "bytes": 19608,
+        "text": "Doctor, elegí a quién proteger."
+      },
+      "witchHealAsk": {
+        "file": "witchHealAsk.mp3",
+        "bytes": 32226,
+        "text": "Bruja — los lobos atacaron. ¿Usás la poción de cura?"
+      },
+      "witchPoisonAsk": {
+        "file": "witchPoisonAsk.mp3",
+        "bytes": 19243,
+        "text": "Bruja — ¿usás el veneno con alguien?"
+      },
+      "cupidChoose": {
+        "file": "cupidChoose.mp3",
+        "bytes": 20340,
+        "text": "Cupido, elegí a dos amantes."
+      },
+      "spyChoose": {
+        "file": "spyChoose.mp3",
+        "bytes": 19791,
+        "text": "Espía, elegí a quién espiar."
+      },
+      "visionWolf": {
+        "file": "visionWolf.mp3",
+        "bytes": 9734,
+        "text": "es un Hombre lobo."
+      },
+      "visionVillager": {
+        "file": "visionVillager.mp3",
+        "bytes": 12660,
+        "text": "NO es un Hombre lobo."
+      },
+      "nobodyDied": {
+        "file": "nobodyDied.mp3",
+        "bytes": 26008,
+        "text": "El pueblo despierta. Nadie murió esta noche."
+      },
+      "foundDead": {
+        "file": "foundDead.mp3",
+        "bytes": 16683,
+        "text": "Encontrados muertos esta mañana."
+      },
+      "eliminated": {
+        "file": "eliminated.mp3",
+        "bytes": 6991,
+        "text": "Eliminado."
+      },
+      "survivedVote": {
+        "file": "survivedVote.mp3",
+        "bytes": 15403,
+        "text": "El pueblo no se puso de acuerdo."
+      },
+      "hunterShot": {
+        "file": "hunterShot.mp3",
+        "bytes": 19608,
+        "text": "Cazador — elegí tu último disparo."
+      },
+      "winners_wolves": {
+        "file": "winners_wolves.mp3",
+        "bytes": 12111,
+        "text": "Ganan los Hombres lobo."
+      },
+      "winners_village": {
+        "file": "winners_village.mp3",
+        "bytes": 13026,
+        "text": "Gana el Pueblo."
+      },
+      "winners_lovers": {
+        "file": "winners_lovers.mp3",
+        "bytes": 10466,
+        "text": "Ganan los Amantes."
+      }
+    },
+    "pt": {
+      "nightFalls": {
+        "file": "nightFalls.mp3",
+        "bytes": 16317,
+        "text": "A noite cai sobre a vila…"
+      },
+      "everyoneSleep": {
+        "file": "everyoneSleep.mp3",
+        "bytes": 17048,
+        "text": "Todos, fechem os olhos."
+      },
+      "dawnTitle": {
+        "file": "dawnTitle.mp3",
+        "bytes": 12660,
+        "text": "Amanhecer."
+      },
+      "wake": {
+        "file": "wake.mp3",
+        "bytes": 10831,
+        "text": "Acorde:"
+      },
+      "role_werewolf": {
+        "file": "role_werewolf.mp3",
+        "bytes": 13208,
+        "text": "Lobisomem."
+      },
+      "role_seer": {
+        "file": "role_seer.mp3",
+        "bytes": 12294,
+        "text": "Vidente."
+      },
+      "role_doctor": {
+        "file": "role_doctor.mp3",
+        "bytes": 12843,
+        "text": "Médico."
+      },
+      "role_witch": {
+        "file": "role_witch.mp3",
+        "bytes": 11014,
+        "text": "Bruxa."
+      },
+      "role_cupid": {
+        "file": "role_cupid.mp3",
+        "bytes": 10831,
+        "text": "Cupido."
+      },
+      "role_spy": {
+        "file": "role_spy.mp3",
+        "bytes": 12477,
+        "text": "Espião."
+      },
+      "wolvesChoose": {
+        "file": "wolvesChoose.mp3",
+        "bytes": 21437,
+        "text": "Lobisomens, escolham sua presa."
+      },
+      "seerChoose": {
+        "file": "seerChoose.mp3",
+        "bytes": 22534,
+        "text": "Vidente, escolha quem inspecionar."
+      },
+      "doctorChoose": {
+        "file": "doctorChoose.mp3",
+        "bytes": 22534,
+        "text": "Médico, escolha quem proteger."
+      },
+      "witchHealAsk": {
+        "file": "witchHealAsk.mp3",
+        "bytes": 47951,
+        "text": "Bruxa — os lobos atacaram. Usar a poção de cura?"
+      },
+      "witchPoisonAsk": {
+        "file": "witchPoisonAsk.mp3",
+        "bytes": 26191,
+        "text": "Bruxa — usar o veneno em alguém?"
+      },
+      "cupidChoose": {
+        "file": "cupidChoose.mp3",
+        "bytes": 20340,
+        "text": "Cupido, escolha dois amantes."
+      },
+      "spyChoose": {
+        "file": "spyChoose.mp3",
+        "bytes": 20706,
+        "text": "Espião, escolha quem espiar."
+      },
+      "visionWolf": {
+        "file": "visionWolf.mp3",
+        "bytes": 13574,
+        "text": "é um Lobisomem."
+      },
+      "visionVillager": {
+        "file": "visionVillager.mp3",
+        "bytes": 15403,
+        "text": "NÃO é um Lobisomem."
+      },
+      "nobodyDied": {
+        "file": "nobodyDied.mp3",
+        "bytes": 33688,
+        "text": "A vila acorda. Ninguém morreu esta noite."
+      },
+      "foundDead": {
+        "file": "foundDead.mp3",
+        "bytes": 18328,
+        "text": "Encontrados mortos esta manhã."
+      },
+      "eliminated": {
+        "file": "eliminated.mp3",
+        "bytes": 13208,
+        "text": "Eliminado."
+      },
+      "survivedVote": {
+        "file": "survivedVote.mp3",
+        "bytes": 19243,
+        "text": "A vila não chegou a um acordo."
+      },
+      "hunterShot": {
+        "file": "hunterShot.mp3",
+        "bytes": 22717,
+        "text": "Caçador — escolha seu último tiro."
+      },
+      "winners_wolves": {
+        "file": "winners_wolves.mp3",
+        "bytes": 15951,
+        "text": "Lobisomens vencem."
+      },
+      "winners_village": {
+        "file": "winners_village.mp3",
+        "bytes": 13940,
+        "text": "A Vila vence."
+      },
+      "winners_lovers": {
+        "file": "winners_lovers.mp3",
+        "bytes": 15403,
+        "text": "Os Amantes vencem."
+      }
+    }
+  }
+}

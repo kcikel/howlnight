@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# TTS tooling (regenerate with scripts/generate-voice.py)
+.venv-tts/
+tools/piper-voices/
