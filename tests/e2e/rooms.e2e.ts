@@ -18,7 +18,7 @@ import {
   buildNightSteps,
 } from '../../src/net'
 
-const BASE = 'http://127.0.0.1:4173/howlnight/'
+const BASE = 'http://127.0.0.1:4173/'
 const ROOT = join(import.meta.dirname, '../../dist')
 
 function mulberry32(seed: number) {
@@ -45,7 +45,6 @@ const MIME: Record<string, string> = {
 function startStaticServer(port: number): Promise<() => Promise<void>> {
   const server = createServer((req, res) => {
     let url = req.url?.split('?')[0] ?? '/'
-    if (url.startsWith('/howlnight')) url = url.slice('/howlnight'.length) || '/'
     let path = join(ROOT, url === '/' ? 'index.html' : url)
     if (!existsSync(path) || (existsSync(path) && statSync(path).isDirectory())) {
       path = join(ROOT, 'index.html')

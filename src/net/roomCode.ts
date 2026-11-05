@@ -27,8 +27,8 @@ export function hostPeerId(code: string): string {
 }
 
 export function roomShareUrl(code: string, origin = typeof location !== 'undefined' ? location.origin : ''): string {
-  const base = origin || 'https://kcikel.github.io'
-  return `${base}/howlnight/?room=${normalizeRoomCode(code)}`
+  const base = origin || 'https://howlnight.com'
+  return `${base}/?room=${normalizeRoomCode(code)}`
 }
 
 export function randomToken(bytes = 16): string {

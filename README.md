@@ -26,7 +26,7 @@ npm run preview
 
 `/workspace/howlnight`
 
-Live: https://kcikel.github.io/howlnight/
+Live: https://howlnight.com
 
 ## Multi-device notes
 

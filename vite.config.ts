@@ -4,7 +4,7 @@ import preact from '@preact/preset-vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/howlnight/',
+  base: '/',
   plugins: [
     preact(),
     VitePWA({
@@ -19,9 +19,9 @@ export default defineConfig({
         background_color: '#0b0a12',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/howlnight/',
+        start_url: '/',
         lang: 'en',
-        scope: '/howlnight/',
+        scope: '/',
         icons: [
           {
             src: 'icons/icon-192.svg',
@@ -40,7 +40,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,mp3,json}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallback: '/howlnight/index.html',
+        navigateFallback: '/index.html',
         runtimeCaching: [
           {
             urlPattern: /\/voice\/.*\.mp3$/,
