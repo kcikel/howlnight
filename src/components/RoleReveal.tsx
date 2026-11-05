@@ -1,16 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { Player } from '../engine'
+import { RoleSigil } from './RoleSigil'
 
-const EMOJI: Record<string, string> = {
-  werewolf: '🐺',
-  villager: '👤',
-  seer: '🔮',
-  doctor: '💉',
-  witch: '🧪',
-  hunter: '🎯',
-  cupid: '💘',
-  spy: '👁️',
-}
 
 interface Props {
   players: Player[]
@@ -32,22 +23,33 @@ export function RoleReveal({ players, t, onDone }: Props) {
         <div class="progress">
           <span style={`width:${((index) / players.length) * 100}%`} />
         </div>
-        <p class="muted" style="text-align:center;margin:0">
+        <p class="muted roles-left">
           {t('rolesLeft')}: {left}
         </p>
 
         {!shown ? (
-          <div class="reveal-gate" onClick={() => setShown(true)} role="button">
+          <div
+            class="reveal-gate"
+            onClick={() => setShown(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setShown(true)
+              }
+            }}
+            role="button"
+            tabIndex={0}
+          >
             <div class="moon-pulse" />
             <div>
               <div class="muted">{t('passPhone')}</div>
-              <h2 style="margin:4px 0 12px">{p.name}</h2>
+              <h2 class="gate-name">{p.name}</h2>
               <div class="btn-primary">{t('tapReveal')}</div>
             </div>
           </div>
         ) : (
-          <div class="role-reveal">
-            <div class="emoji">{EMOJI[p.role] ?? '🎭'}</div>
+          <div class="role-reveal" data-role={p.role}>
+            <div class="emoji"><RoleSigil role={p.role} /></div>
             <p class="muted">{t('yourRole')}</p>
             <h2>{t(`role_${p.role}`)}</h2>
             <p class="lead">{t(`desc_${p.role}`)}</p>

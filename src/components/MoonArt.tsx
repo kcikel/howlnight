@@ -1,40 +1,83 @@
+/**
+ * Woodcut-style hero: a carved moon with gouged halo rings, a howling wolf on
+ * a ridge and the sleeping village below. Colours come from CSS variables so
+ * the print reads as bone ink on woad-blue paper.
+ */
 export function MoonArt() {
+  // Gouge marks across the sky: short carved cuts, deterministic.
+  const cuts = Array.from({ length: 30 }, (_, i) => {
+    const y = 16 + ((i * 37) % 150)
+    const x = (i * 83) % 380
+    const len = 10 + ((i * 13) % 26)
+    return { x, y, len }
+  })
+  const stars = Array.from({ length: 14 }, (_, i) => ({
+    x: (i * 61 + 23) % 380,
+    y: 12 + ((i * 41) % 120),
+  }))
   return (
     <div class="hero-art" aria-hidden="true">
-      <svg viewBox="0 0 390 180" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 390 270" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
         <defs>
-          <radialGradient id="sky" cx="50%" cy="0%" r="80%">
-            <stop offset="0%" stop-color="#2a1f4d" />
-            <stop offset="100%" stop-color="#0b0a12" />
-          </radialGradient>
-          <radialGradient id="moonG" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stop-color="#fff8" />
-            <stop offset="45%" stop-color="#c9b8ff" />
-            <stop offset="100%" stop-color="#6b4dff" />
-          </radialGradient>
+          <clipPath id="hn-moon-clip">
+            <circle cx="236" cy="112" r="64" />
+          </clipPath>
         </defs>
-        <rect width="390" height="180" fill="url(#sky)" />
-        {/* stars */}
-        {Array.from({ length: 28 }, (_, i) => {
-          const x = (i * 47 + 13) % 390
-          const y = (i * 29 + 11) % 110
-          const r = 0.6 + (i % 3) * 0.4
-          return <circle key={i} cx={x} cy={y} r={r} fill="#efe9ff" opacity={0.35 + (i % 5) * 0.1} />
-        })}
-        <circle cx="300" cy="52" r="28" fill="url(#moonG)" />
-        <circle cx="288" cy="46" r="24" fill="#14121f" opacity="0.85" />
-        {/* pines */}
-        <path d="M0 180 L0 140 L30 100 L50 140 L70 90 L95 140 L110 115 L130 145 L160 100 L185 145 L210 120 L235 150 L270 105 L300 150 L330 125 L360 155 L390 130 L390 180 Z" fill="#12101c" />
-        <path d="M40 180 L55 130 L70 180 M120 180 L140 115 L160 180 M220 180 L245 125 L270 180 M320 180 L340 135 L360 180" fill="#1a1728" />
-        {/* wolf silhouette */}
+        <g class="wc-cuts">
+          {cuts.map((c, i) => (
+            <path key={i} d={`M${c.x} ${c.y} q${c.len / 2} -1.5 ${c.len} 0`} />
+          ))}
+        </g>
+        <g class="wc-stars">
+          {stars.map((s, i) => (
+            <path key={i} d={`M${s.x} ${s.y - 3} v6 M${s.x - 3} ${s.y} h6`} />
+          ))}
+        </g>
+        <g class="wc-moon">
+          <g class="wc-halo">
+            <circle cx="236" cy="112" r="80" />
+            <circle cx="236" cy="112" r="96" />
+            <circle cx="236" cy="112" r="114" />
+          </g>
+          <circle cx="236" cy="112" r="64" class="wc-moon-disc" />
+          {/* carved shading on the moon's far limb */}
+          <g class="wc-hatch" clip-path="url(#hn-moon-clip)">
+            <path d="M266 52 q30 60 0 120" />
+            <path d="M276 52 q30 60 0 120" />
+            <path d="M286 52 q28 60 0 120" />
+            <path d="M206 78 q10 -6 22 -3" />
+            <path d="M214 92 q8 -3 14 0" />
+            <path d="M248 140 q8 4 16 1" />
+          </g>
+        </g>
         <path
-          d="M95 150 c8-18 22-28 38-28 10 0 18 4 26 12 4-10 14-16 24-14 2 8-2 16-8 22 12 2 20 10 22 22 H90 c2-8 6-12 13-14z"
-          fill="#0b0a12"
-          stroke="#9b7cff"
-          stroke-width="1.2"
-          opacity="0.95"
+          class="wc-ridge"
+          d="M0 214 L12 202 L18 182 L24 202 L36 196 L44 174 L52 196 L66 200 L78 184 L86 200 L110 204 L140 206 L180 210 L214 200 L240 204 L270 198 L284 178 L292 198 L318 196 L330 172 L338 196 L360 192 L372 176 L380 194 L390 192 L390 290 L0 290 Z"
         />
-        <circle cx="120" cy="132" r="1.6" fill="#e0455a" />
+        {/* village roofs, cut from the same paper as the page */}
+        <path
+          class="wc-village"
+          d="M170 290 L170 232 L186 218 L202 232 L210 232 L210 224 L216 224 L216 232 L224 232 L240 218 L256 232 L262 232 L262 194 L266 180 L270 194 L270 226 L282 226 L298 212 L314 226 L322 226 L338 214 L354 226 L390 222 L390 290 Z"
+        />
+        <g class="wc-windows">
+          <rect x="183" y="238" width="5" height="7" />
+          <rect x="236" y="236" width="5" height="7" />
+          <rect x="264" y="206" width="3" height="6" />
+          <rect x="296" y="232" width="5" height="7" />
+          <rect x="346" y="236" width="5" height="6" />
+        </g>
+        {/* the crag and the wolf howling across the moon */}
+        <path class="wc-crag" d="M0 236 Q50 222 96 214 L120 192 L150 186 L180 192 L196 214 Q206 236 214 290 L0 290 Z" />
+        <g class="wc-crag-cuts">
+          <path d="M20 250 q22 -8 44 -4" />
+          <path d="M120 206 q16 -4 30 0" />
+          <path d="M140 226 q20 -2 36 8" />
+        </g>
+        <path
+          class="wc-wolf"
+          transform="translate(126 189) scale(1.12)"
+          d="M0 0 Q4 -6 14 -8 C10 -20 14 -34 22 -42 C26 -50 28 -60 30 -66 C31 -72 33 -76 36 -80 L35 -92 L43 -84 L52 -92 L62 -102 L60 -95 L55 -92 L57 -88 C51 -82 49 -76 48 -70 C52 -60 52 -50 50 -40 L50 -6 L56 0 L44 0 L44 -20 C40 -24 34 -18 32 -10 L36 -2 L38 0 Z"
+        />
       </svg>
     </div>
   )
@@ -42,11 +85,10 @@ export function MoonArt() {
 
 export function BrandMark() {
   return (
-    <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#14121f" stroke="#2e2a45" />
-      <circle cx="34" cy="28" r="14" fill="#c9b8ff" />
-      <circle cx="28" cy="24" r="14" fill="#14121f" />
-      <path d="M20 46c4-7 9-10 14-10s10 3 14 10" stroke="#9b7cff" stroke-width="3" stroke-linecap="round" fill="none" />
+    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18.5" class="bm-ring" />
+      <path class="bm-moon" d="M24 8a12 12 0 1 0 8 19A10 10 0 1 1 24 8z" />
+      <path class="bm-cut" d="M9 31 q5 -3 11 -1" />
     </svg>
   )
 }

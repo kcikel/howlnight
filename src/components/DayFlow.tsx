@@ -33,7 +33,7 @@ export function DawnScreen({ state, died, lang, t, voiceOn, onContinue }: DawnPr
   }, [voiceOn, lang, died.map((d) => d.id).join(',')])
 
   return (
-    <div class="panel stack">
+    <div class="panel stack day-scene">
       <h2>{t('dawnTitle')}</h2>
       {died.length === 0 ? (
         <p class="narration">{t('nobodyDied')}</p>
@@ -104,7 +104,7 @@ export function DiscussScreen({ seconds, lang, t, voiceOn, onVote }: DiscussProp
   const ss = String(left % 60).padStart(2, '0')
 
   return (
-    <div class="panel stack">
+    <div class="panel stack day-scene">
       <h2>{t('discussTitle')}</h2>
       <p class="muted">{t('discussHint')}</p>
       <div class="timer">
@@ -147,7 +147,7 @@ export function VoteScreen({ state, lang, t, voiceOn, onCast, onReveal }: VotePr
 
   if (allDone) {
     return (
-      <div class="panel stack">
+      <div class="panel stack day-scene">
         <h2>{t('voteTitle')}</h2>
         <p class="narration">
           {t('votesCast')}: {state.votes.length}/{living.length}
@@ -160,7 +160,7 @@ export function VoteScreen({ state, lang, t, voiceOn, onCast, onReveal }: VotePr
   }
 
   return (
-    <div class="panel stack">
+    <div class="panel stack day-scene">
       <h2>{t('voteTitle')}</h2>
       <p class="muted" style="text-align:center">
         {t('voteAs')}
@@ -230,7 +230,7 @@ export function EliminationScreen({ eliminated, extras, lang, t, voiceOn, onCont
   }, [voiceOn, lang, all.map((p) => p.id).join(',')])
 
   return (
-    <div class="panel stack">
+    <div class="panel stack day-scene">
       <h2>{all.length ? t('eliminated') : t('survivedVote')}</h2>
       {all.length > 0 && (
         <ul class="log-list">
@@ -272,7 +272,7 @@ export function HunterRevenge({ state, lang, t, voiceOn, onShoot }: HunterProps)
 
   const living = livingPlayers(state)
   return (
-    <div class="panel stack">
+    <div class="panel stack day-scene">
       <h2>{t('hunterShot')}</h2>
       <div class="player-pick">
         {living.map((p) => (

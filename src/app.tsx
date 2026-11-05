@@ -514,13 +514,11 @@ export function App() {
   return (
     <div class="app-shell">
       <header class="topbar">
-        <div class="brand" onClick={goHome} role="button" style="cursor:pointer">
+        <div class="brand" onClick={goHome} role="button">
           <BrandMark />
           <div>
-            <div>{t('appName')}</div>
-            <div class="muted" style="font-size:0.72rem;font-weight:500">
-              {t('tagline')}
-            </div>
+            <div class="brand-name">{t('appName')}</div>
+            <div class="brand-tagline">{t('tagline')}</div>
           </div>
         </div>
         <div class="top-actions">
@@ -536,16 +534,23 @@ export function App() {
               </option>
             ))}
           </select>
-          <button class="chip" type="button" onClick={() => setShowRules(true)} title={t('rulesHelp')}>
+          <button class="chip chip-icon" type="button" onClick={() => setShowRules(true)} title={t('rulesHelp')} aria-label={t('rulesHelp')}>
             ?
           </button>
-          <button class="chip" type="button" onClick={toggleVoice}>
-            {voiceOn ? '🔊' : '🔇'}
+          <button
+            class="chip chip-icon"
+            type="button"
+            onClick={toggleVoice}
+            aria-pressed={voiceOn}
+            aria-label={voiceOn ? t('mute') : t('unmute')}
+            title={voiceOn ? t('mute') : t('unmute')}
+          >
+            <VoiceGlyph on={voiceOn} />
           </button>
         </div>
       </header>
       {showRules && (
-        <div class="stack" style="margin:12px">
+        <div class="stack">
           <RulesHelp t={t} onClose={() => setShowRules(false)} />
         </div>
       )}
@@ -554,5 +559,18 @@ export function App() {
         <ProUpsell t={t} onBack={() => setShowPro(false)} />
       )}
     </div>
+  )
+}
+
+function VoiceGlyph({ on }: { on: boolean }) {
+  return (
+    <svg class="voice-glyph" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+      {on ? (
+        <path class="vg-wave" d="M15 9q2 3 0 6M17.5 6.5q4 5.5 0 11" />
+      ) : (
+        <path class="vg-wave" d="M15.5 9.5l5 5M20.5 9.5l-5 5" />
+      )}
+    </svg>
   )
 }

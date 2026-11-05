@@ -5,18 +5,8 @@ import type { Lang } from '../../i18n/messages'
 import type { RoleId } from '../../engine'
 import { track } from '../../analytics'
 import { ProComingSoonButton } from '../ProUpsell'
+import { RoleSigil } from '../RoleSigil'
 
-const EMOJI: Record<string, string> = {
-  werewolf: '🐺',
-  villager: '👤',
-  seer: '🔮',
-  doctor: '💉',
-  witch: '🧪',
-  hunter: '🎯',
-  cupid: '💘',
-  spy: '👁️',
-  littlegirl: '👧',
-}
 
 interface HostProps {
   mode: 'host'
@@ -213,7 +203,7 @@ export function RoomPlay(props: Props) {
           >
             <div class="moon-pulse" />
             <div>
-              <h2 style="margin:4px 0 12px">{priv.name}</h2>
+              <h2 class="gate-name">{priv.name}</h2>
               <div class="btn-primary">{t('tapReveal')}</div>
             </div>
           </div>
@@ -223,8 +213,8 @@ export function RoomPlay(props: Props) {
     if (priv.role) {
       return (
         <div class="panel stack">
-          <div class="role-reveal">
-            <div class="emoji">{EMOJI[priv.role] ?? '🎭'}</div>
+          <div class="role-reveal" data-role={priv.role}>
+            <div class="emoji"><RoleSigil role={priv.role} /></div>
             <p class="muted">{t('yourRole')}</p>
             <h2>{t(`role_${priv.role}`)}</h2>
             <p class="lead">{t(`desc_${priv.role}`)}</p>
@@ -338,7 +328,7 @@ export function RoomPlay(props: Props) {
 
   if (pub.phase === 'dawn') {
     return (
-      <div class="panel stack">
+      <div class="panel stack day-scene">
         <h2>{t('dawnTitle')}</h2>
         {!pub.dawnDied?.length ? (
           <p class="narration">{t('nobodyDied')}</p>
@@ -379,7 +369,7 @@ export function RoomPlay(props: Props) {
     const mm = String(Math.floor(left / 60)).padStart(2, '0')
     const ss = String(left % 60).padStart(2, '0')
     return (
-      <div class="panel stack">
+      <div class="panel stack day-scene">
         <h2>{t('discussTitle')}</h2>
         <p class="muted">{t('discussHint')}</p>
         <div class="timer">
@@ -412,7 +402,7 @@ export function RoomPlay(props: Props) {
     const allDone = pub.votesCast >= pub.votesNeeded
     if (allDone) {
       return (
-        <div class="panel stack">
+        <div class="panel stack day-scene">
           <h2>{t('voteTitle')}</h2>
           <p class="narration">
             {t('votesCast')}: {pub.votesCast}/{pub.votesNeeded}
@@ -431,7 +421,7 @@ export function RoomPlay(props: Props) {
     }
     if (!priv?.alive) {
       return (
-        <div class="panel stack">
+        <div class="panel stack day-scene">
           <h2>{t('voteTitle')}</h2>
           <p class="muted" style="text-align:center">
             {t('deadSpectate')}
@@ -443,7 +433,7 @@ export function RoomPlay(props: Props) {
       )
     }
     return (
-      <div class="panel stack">
+      <div class="panel stack day-scene">
         <h2>{t('voteTitle')}</h2>
         {voted ? (
           <p class="narration">{t('voteSubmitted')}</p>
@@ -486,7 +476,7 @@ export function RoomPlay(props: Props) {
 
   if (pub.phase === 'elimination') {
     return (
-      <div class="panel stack">
+      <div class="panel stack day-scene">
         <h2>{pub.eliminated?.length ? t('eliminated') : t('survivedVote')}</h2>
         {!!pub.eliminated?.length && (
           <ul class="log-list">
@@ -513,7 +503,7 @@ export function RoomPlay(props: Props) {
   if (pub.phase === 'hunter_revenge') {
     const canShoot = priv?.canAct
     return (
-      <div class="panel stack">
+      <div class="panel stack day-scene">
         <h2>{t('hunterShot')}</h2>
         {canShoot ? (
           <div class="player-pick">

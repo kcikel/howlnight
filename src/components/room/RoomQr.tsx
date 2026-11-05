@@ -14,7 +14,7 @@ export function RoomQr({ url, size = 180 }: Props) {
     void QRCode.toDataURL(url, {
       width: size,
       margin: 1,
-      color: { dark: '#efe9ff', light: '#0b0a12' },
+      color: { dark: '#121c33', light: '#ece1c6' },
       errorCorrectionLevel: 'M',
     }).then((d) => {
       if (!cancelled) setDataUrl(d)

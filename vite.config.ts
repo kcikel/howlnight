@@ -15,8 +15,8 @@ export default defineConfig({
         short_name: 'Howlnight',
         description:
           'Pass-the-phone Werewolf / Mafia narrator for your party. No human moderator needed.',
-        theme_color: '#0b0a12',
-        background_color: '#0b0a12',
+        theme_color: '#121c33',
+        background_color: '#121c33',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
