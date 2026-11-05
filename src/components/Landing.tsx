@@ -1,0 +1,35 @@
+import { MoonArt } from './MoonArt'
+
+interface Props {
+  t: (k: string) => string
+  onStart: () => void
+  onPro: () => void
+}
+
+export function Landing({ t, onStart, onPro }: Props) {
+  return (
+    <div class="stack">
+      <div class="panel">
+        <MoonArt />
+        <h1 style="font-size:1.55rem;margin-top:0">{t('landingTitle')}</h1>
+        <p class="lead">{t('landingBody')}</p>
+        <button class="btn-primary btn-block" type="button" onClick={onStart} style="margin-top:8px">
+          {t('ctaStart')}
+        </button>
+        <button class="btn btn-block" type="button" onClick={onPro} style="margin-top:8px">
+          {t('ctaPro')}
+        </button>
+        <p class="muted" style="font-size:0.85rem;margin-bottom:0;margin-top:12px">{t('installHint')}</p>
+      </div>
+      <div class="panel">
+        <h3>{t('ctaHow')}</h3>
+        <ol class="how-list">
+          <li>{t('how1')}</li>
+          <li>{t('how2')}</li>
+          <li>{t('how3')}</li>
+          <li>{t('how4')}</li>
+        </ol>
+      </div>
+    </div>
+  )
+}
