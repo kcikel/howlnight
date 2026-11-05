@@ -1,18 +1,28 @@
 #!/usr/bin/env python3
-"""Generate Piper TTS narration clips for Howlnight."""
+"""Generate Howlnight narrator clips.
+
+Engines:
+  --engine voxcpm  (default) OpenBMB VoxCPM2, Apache-2.0, multilingual voice design
+  --engine piper   legacy Piper ONNX voices
+"""
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-VOICES_DIR = ROOT / "tools" / "piper-voices"
-OUT = ROOT / "public" / "voice"
-PIPER = ROOT / ".venv-tts" / "bin" / "piper"
+import numpy as np
 
-# Keys that the narrator speaks (fixed lines). Dynamic names use Web Speech fallback.
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "public" / "voice"
+VOXCPM_DIR = ROOT / "tools" / "voxcpm-models" / "VoxCPM2"
+VOXCPM_VENV_PY = ROOT / ".venv-voxcpm" / "bin" / "python"
+PIPER = ROOT / ".venv-tts" / "bin" / "piper"
+VOICES_DIR = ROOT / "tools" / "piper-voices"
+
 NARRATOR_KEYS = [
     "nightFalls",
     "everyoneSleep",
@@ -43,7 +53,6 @@ NARRATOR_KEYS = [
     "winners_lovers",
 ]
 
-# Inline the three language dicts (subset) — keep in sync with src/i18n/messages.ts
 TEXTS = {
     "en": {
         "nightFalls": "Night falls on the village…",
@@ -134,13 +143,32 @@ TEXTS = {
     },
 }
 
-VOICES = {
+# Deep warm dramatic campfire narrator — same character across langs; accent via prompt.
+VOXCPM_VOICES = {
+    "en": (
+        "A deep warm mature male storyteller voice, gravelly and resonant, "
+        "speaking slowly and dramatically like a campfire narrator telling a "
+        "spooky village legend at night, clear American English"
+    ),
+    "es": (
+        "A deep warm mature male storyteller voice, gravelly and resonant, "
+        "speaking slowly and dramatically like a campfire narrator telling a "
+        "spooky village legend at night, Latin American Spanish accent"
+    ),
+    "pt": (
+        "A deep warm mature male storyteller voice, gravelly and resonant, "
+        "speaking slowly and dramatically like a campfire narrator telling a "
+        "spooky village legend at night, Brazilian Portuguese accent"
+    ),
+}
+
+PIPER_VOICES = {
     "en": "en_US-norman-medium.onnx",
     "es": "es_MX-claude-high.onnx",
     "pt": "pt_BR-jeff-medium.onnx",
 }
 
-VOICE_META = {
+PIPER_META = {
     "en": {
         "id": "en_US-norman-medium",
         "license": "public domain (LibriVox dataset)",
@@ -158,14 +186,109 @@ VOICE_META = {
     },
 }
 
+VOXCPM_META = {
+    "en": {
+        "id": "openbmb/VoxCPM2",
+        "license": "Apache-2.0",
+        "quality": "48kHz voice-design",
+        "voice_prompt": VOXCPM_VOICES["en"],
+    },
+    "es": {
+        "id": "openbmb/VoxCPM2",
+        "license": "Apache-2.0",
+        "quality": "48kHz voice-design",
+        "voice_prompt": VOXCPM_VOICES["es"],
+    },
+    "pt": {
+        "id": "openbmb/VoxCPM2",
+        "license": "Apache-2.0",
+        "quality": "48kHz voice-design",
+        "voice_prompt": VOXCPM_VOICES["pt"],
+    },
+}
 
-def synth(lang: str, key: str, text: str, dest: Path) -> None:
-    model = VOICES_DIR / VOICES[lang]
+
+def wav_to_mp3(wav: np.ndarray, sr: int, dest: Path, bitrate: str = "64k") -> None:
+    """Peak-normalize, trim edge silence, encode mono MP3 atomically."""
+    import soundfile as sf
+
+    peak = float(np.max(np.abs(wav))) or 1.0
+    wav_n = (wav / peak * 0.89).astype(np.float32)  # leave headroom (~-1 dBFS)
+    # Trim leading/trailing near-silence in numpy (more reliable than ffmpeg silenceremove)
+    thr = 0.01
+    idx = np.where(np.abs(wav_n) > thr)[0]
+    if len(idx):
+        pad = int(0.05 * sr)
+        a = max(0, int(idx[0]) - pad)
+        b = min(len(wav_n), int(idx[-1]) + pad)
+        wav_n = wav_n[a:b]
+    if len(wav_n) < int(0.08 * sr):
+        # keep a tiny pad so ffmpeg always has something to encode
+        wav_n = np.pad(wav_n, (0, max(0, int(0.12 * sr) - len(wav_n))))
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        wav_path = Path(tmp.name)
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False, dir=str(dest.parent)) as tmpo:
+        mp3_tmp = Path(tmpo.name)
+    try:
+        sf.write(wav_path, wav_n, sr)
+        # dynaudnorm is stabler than loudnorm on very short clips
+        af = "dynaudnorm=f=75:g=10:p=0.9"
+        r = subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                str(wav_path),
+                "-af",
+                af,
+                "-ac",
+                "1",
+                "-ar",
+                "22050",
+                "-b:a",
+                bitrate,
+                "-codec:a",
+                "libmp3lame",
+                str(mp3_tmp),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if r.returncode != 0 or mp3_tmp.stat().st_size < 200:
+            # fallback: no af
+            r2 = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    str(wav_path),
+                    "-ac",
+                    "1",
+                    "-ar",
+                    "22050",
+                    "-b:a",
+                    bitrate,
+                    "-codec:a",
+                    "libmp3lame",
+                    str(mp3_tmp),
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if r2.returncode != 0:
+                raise RuntimeError(r.stderr[-400:] + "\n" + r2.stderr[-400:])
+        mp3_tmp.replace(dest)
+    finally:
+        wav_path.unlink(missing_ok=True)
+        mp3_tmp.unlink(missing_ok=True)
+
+
+def synth_piper(lang: str, text: str, dest: Path) -> None:
+    model = VOICES_DIR / PIPER_VOICES[lang]
     config = Path(str(model) + ".json")
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         wav = Path(tmp.name)
     try:
-        # Slightly slower + sentence silence for dramatic pacing
         cmd = [
             str(PIPER),
             "-m",
@@ -180,7 +303,6 @@ def synth(lang: str, key: str, text: str, dest: Path) -> None:
             "0.35",
         ]
         subprocess.run(cmd, input=text + "\n", text=True, check=True, capture_output=True)
-        # Compact mono mp3 ~56kbps (iOS-friendly)
         subprocess.run(
             [
                 "ffmpeg",
@@ -204,12 +326,108 @@ def synth(lang: str, key: str, text: str, dest: Path) -> None:
         wav.unlink(missing_ok=True)
 
 
-def main() -> None:
+def run_voxcpm(only_lang: str | None, only_key: str | None, bitrate: str) -> None:
+    import torch
+    from voxcpm import VoxCPM
+
+    print(f"Loading VoxCPM2 from {VOXCPM_DIR} …", flush=True)
+    t0 = time.time()
+    model = VoxCPM.from_pretrained(
+        str(VOXCPM_DIR),
+        load_denoiser=False,
+        device="cpu",
+        optimize=False,
+    )
+    print(f"Loaded in {time.time() - t0:.1f}s  sample_rate={model.tts_model.sample_rate}", flush=True)
+
+    manifest: dict = {
+        "engine": "voxcpm2",
+        "model": "openbmb/VoxCPM2",
+        "model_license": "Apache-2.0",
+        "format": "mp3",
+        "bitrate": bitrate,
+        "sample_rate_native": model.tts_model.sample_rate,
+        "voices": VOXCPM_META,
+        "keys": NARRATOR_KEYS,
+        "files": {},
+        "generation": {"device": "cpu", "cfg_value": 2.0, "inference_timesteps": 10},
+    }
+
+    langs = (only_lang,) if only_lang else ("en", "es", "pt")
+    keys = (only_key,) if only_key else tuple(NARRATOR_KEYS)
+    total_gen = 0.0
+    n = 0
+    for lang in langs:
+        out_lang = OUT / lang
+        out_lang.mkdir(parents=True, exist_ok=True)
+        manifest["files"].setdefault(lang, {})
+        for key in keys:
+            text = TEXTS[lang][key]
+            prompt = f"({VOXCPM_VOICES[lang]}){text}"
+            dest = out_lang / f"{key}.mp3"
+            print(f"[{lang}] {key}: {text}", flush=True)
+            torch.manual_seed(42)  # fixed seed for consistent narrator timbre
+            t1 = time.time()
+            words = len(text.replace("…", " ").replace("—", " ").split())
+            steps = 14 if words <= 2 else 10
+            wav = model.generate(text=prompt, cfg_value=2.0, inference_timesteps=steps)
+            gen_s = time.time() - t1
+            total_gen += gen_s
+            n += 1
+            raw_dur = len(wav) / model.tts_model.sample_rate
+            peak = float(np.max(np.abs(wav))) if len(wav) else 0.0
+            # Retry once if near-silent or absurdly short for multi-word lines
+            min_dur = 0.35 if words <= 2 else 0.7
+            if peak < 0.02 or raw_dur < min_dur:
+                print(f"  retry (peak={peak:.4f} dur={raw_dur:.2f})", flush=True)
+                torch.manual_seed(43)
+                t1 = time.time()
+                wav = model.generate(text=prompt, cfg_value=2.0, inference_timesteps=12)
+                gen_s = time.time() - t1
+                total_gen += gen_s
+                raw_dur = len(wav) / model.tts_model.sample_rate
+                peak = float(np.max(np.abs(wav))) if len(wav) else 0.0
+            wav_to_mp3(wav, model.tts_model.sample_rate, dest, bitrate=bitrate)
+            size = dest.stat().st_size
+            manifest["files"][lang][key] = {
+                "file": f"{key}.mp3",
+                "bytes": size,
+                "text": text,
+                "gen_seconds": round(gen_s, 2),
+                "raw_duration": round(raw_dur, 3),
+                "peak": round(peak, 4),
+            }
+            print(f"  -> {size}B gen={gen_s:.1f}s raw={raw_dur:.2f}s peak={peak:.3f}", flush=True)
+
+    # If regenerating a subset, merge with existing manifest files for other langs/keys
+    existing_path = OUT / "manifest.json"
+    if existing_path.exists() and (only_lang or only_key):
+        try:
+            old = json.loads(existing_path.read_text())
+            for lang, files in old.get("files", {}).items():
+                manifest["files"].setdefault(lang, {})
+                for k, v in files.items():
+                    if k not in manifest["files"][lang]:
+                        manifest["files"][lang][k] = v
+        except Exception:
+            pass
+
+    manifest["stats"] = {
+        "clips": n,
+        "total_gen_seconds": round(total_gen, 1),
+        "avg_gen_seconds": round(total_gen / n, 2) if n else 0,
+    }
+    (OUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    total = sum(p.stat().st_size for p in OUT.rglob("*.mp3"))
+    print(f"Done. {n} clips, gen_time={total_gen:.1f}s, total mp3={total/1024/1024:.2f} MB")
+
+
+def run_piper() -> None:
     manifest: dict = {
         "engine": "piper-tts",
         "format": "mp3",
         "bitrate": "56k",
-        "voices": VOICE_META,
+        "voices": PIPER_META,
         "keys": NARRATOR_KEYS,
         "files": {},
     }
@@ -221,12 +439,26 @@ def main() -> None:
             text = TEXTS[lang][key]
             dest = out_lang / f"{key}.mp3"
             print(f"[{lang}] {key}: {text}")
-            synth(lang, key, text, dest)
+            synth_piper(lang, text, dest)
             size = dest.stat().st_size
             manifest["files"][lang][key] = {"file": f"{key}.mp3", "bytes": size, "text": text}
     (OUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     total = sum(p.stat().st_size for p in OUT.rglob("*.mp3"))
     print(f"Done. Total mp3 bytes: {total} ({total/1024/1024:.2f} MB)")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--engine", choices=("voxcpm", "piper"), default="voxcpm")
+    ap.add_argument("--lang", choices=("en", "es", "pt"), default=None)
+    ap.add_argument("--key", default=None)
+    ap.add_argument("--bitrate", default="64k")
+    args = ap.parse_args()
+    OUT.mkdir(parents=True, exist_ok=True)
+    if args.engine == "voxcpm":
+        run_voxcpm(args.lang, args.key, args.bitrate)
+    else:
+        run_piper()
 
 
 if __name__ == "__main__":

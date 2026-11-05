@@ -26,3 +26,9 @@ dist-ssr
 # TTS tooling (regenerate with scripts/generate-voice.py)
 .venv-tts/
 tools/piper-voices/
+
+.venv-voxcpm/
+tools/voxcpm-models/
+.cache/
+samples/
+__pycache__/
