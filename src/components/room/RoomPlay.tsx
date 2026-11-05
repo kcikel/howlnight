@@ -3,6 +3,8 @@ import { speakParts, unlockAudio, type SpeakPart } from '../../audio/speech'
 import type { HostSession, PlayerSession, PrivateGameView, PublicGameView } from '../../net'
 import type { Lang } from '../../i18n/messages'
 import type { RoleId } from '../../engine'
+import { track } from '../../analytics'
+import { ProComingSoonButton } from '../ProUpsell'
 
 const EMOJI: Record<string, string> = {
   werewolf: '🐺',
@@ -25,6 +27,7 @@ interface HostProps {
   voiceOn: boolean
   onLeave: () => void
   onBackToLobby: () => void
+  onPro?: () => void
 }
 
 interface PlayerProps {
@@ -35,6 +38,7 @@ interface PlayerProps {
   voiceOn: boolean
   onLeave: () => void
   onBackToLobby: () => void
+  onPro?: () => void
 }
 
 type Props = HostProps | PlayerProps
@@ -46,6 +50,12 @@ export function RoomPlay(props: Props) {
   const [selected, setSelected] = useState<string[]>([])
   const [witchHeal, setWitchHeal] = useState<boolean | null>(null)
   const [roleShown, setRoleShown] = useState(false)
+
+  useEffect(() => {
+    if (pub?.phase === 'game_over') {
+      track('game_end', { winner: pub.winner ?? 'village', mode: props.mode })
+    }
+  }, [pub?.phase, pub?.winner, props.mode])
 
   useEffect(() => {
     if (props.mode === 'host') {
@@ -555,6 +565,7 @@ export function RoomPlay(props: Props) {
             {t('playAgainSameRoom')}
           </button>
         )}
+        {props.onPro && <ProComingSoonButton t={t} onOpen={props.onPro} />}
         <button class="btn btn-block" type="button" onClick={props.onLeave}>
           {t('home')}
         </button>

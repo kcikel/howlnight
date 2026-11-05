@@ -14,10 +14,11 @@ interface Props {
   /** Injected for tests; defaults to PeerJS. */
   createAndConnect?: (code: string, name: string) => Promise<PlayerSession>
   onReady: (session: PlayerSession) => void
+  onJoinFailed?: () => void
   onBack: () => void
 }
 
-export function JoinRoom({ t, initialCode = '', createAndConnect, onReady, onBack }: Props) {
+export function JoinRoom({ t, initialCode = '', createAndConnect, onReady, onJoinFailed, onBack }: Props) {
   const [code, setCode] = useState(normalizeRoomCode(initialCode))
   const [name, setName] = useState('')
   const [status, setStatus] = useState<'form' | 'connecting' | 'error'>('form')
@@ -40,6 +41,7 @@ export function JoinRoom({ t, initialCode = '', createAndConnect, onReady, onBac
       onReady(s)
     } catch (e) {
       setStatus('error')
+      onJoinFailed?.()
       const raw = e instanceof Error ? e.message : ''
       if (raw.startsWith('NEED_SAME_WIFI') || /timeout|failed/i.test(raw)) {
         setError(t('needSameWifi'))

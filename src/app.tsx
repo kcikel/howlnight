@@ -15,6 +15,7 @@ import { Landing } from './components/Landing'
 import { NightFlow } from './components/NightFlow'
 import { newPlayer, PlayerSetup, type SetupPlayer } from './components/PlayerSetup'
 import { ProUpsell } from './components/ProUpsell'
+import { track } from './analytics'
 import { RoleReveal } from './components/RoleReveal'
 import { HostLobby } from './components/room/HostLobby'
 import { JoinRoom, PlayerLobby } from './components/room/JoinRoom'
@@ -53,7 +54,6 @@ type Screen =
   | 'setup'
   | 'reveal'
   | 'play'
-  | 'pro'
   | 'host_lobby'
   | 'host_play'
   | 'join'
@@ -80,6 +80,7 @@ export function App() {
   const [roleCounts, setRoleCounts] = useState(() => presetForCount(6))
   const [discussSeconds, setDiscussSeconds] = useState(180)
   const [showRules, setShowRules] = useState(false)
+  const [showPro, setShowPro] = useState(false)
   const [game, setGame] = useState<GameState | null>(null)
   const [voiceOn, setVoiceOn] = useState(() => !isSpeechMuted())
   const [dawnDied, setDawnDied] = useState<Player[]>([])
@@ -163,6 +164,7 @@ export function App() {
 
   const startPlay = () => {
     if (!game) return
+    track('game_start', { mode: 'pass_phone' })
     setGame(beginNight(game))
     setScreen('play')
   }
@@ -233,6 +235,7 @@ export function App() {
         hostToken: randomToken(),
       })
       await session.init()
+      track('room_created')
       setHostSession(session)
       setScreen('host_lobby')
       startAmbient()
@@ -256,12 +259,9 @@ export function App() {
             setJoinCode('')
             setScreen('join')
           }}
-          onPro={() => setScreen('pro')}
+          onPro={() => setShowPro(true)}
         />
       )
-    }
-    if (screen === 'pro') {
-      return <ProUpsell t={t} onBack={() => setScreen('landing')} />
     }
     if (screen === 'setup') {
       return (
@@ -287,10 +287,12 @@ export function App() {
           t={t}
           initialCode={joinCode}
           onReady={(s) => {
+            track('room_joined')
             setPlayerSession(s)
             setScreen('player_lobby')
             startAmbient()
           }}
+          onJoinFailed={() => track('join_failed')}
           onBack={goHome}
         />
       )
@@ -301,6 +303,7 @@ export function App() {
           session={hostSession}
           t={t}
           onStarted={() => {
+            track('game_start', { mode: 'room_host' })
             setScreen('host_play')
           }}
           onLeave={goHome}
@@ -312,7 +315,10 @@ export function App() {
         <PlayerLobby
           session={playerSession}
           t={t}
-          onStarted={() => setScreen('player_play')}
+          onStarted={() => {
+            track('game_start', { mode: 'room_player' })
+            setScreen('player_play')
+          }}
           onLeave={goHome}
         />
       )
@@ -328,6 +334,7 @@ export function App() {
           voiceOn={voiceOn}
           onLeave={goHome}
           onBackToLobby={() => setScreen('host_lobby')}
+          onPro={() => setShowPro(true)}
         />
       )
     }
@@ -341,6 +348,7 @@ export function App() {
           voiceOn={voiceOn}
           onLeave={goHome}
           onBackToLobby={() => setScreen('player_lobby')}
+          onPro={() => setShowPro(true)}
         />
       )
     }
@@ -452,7 +460,17 @@ export function App() {
         )
       }
       if (phase === 'game_over') {
-        return <GameOver state={game} lang={lang} t={t} voiceOn={voiceOn} onAgain={resetToSetup} onHome={goHome} />
+        return (
+          <GameOver
+            state={game}
+            lang={lang}
+            t={t}
+            voiceOn={voiceOn}
+            onAgain={resetToSetup}
+            onHome={goHome}
+            onPro={() => setShowPro(true)}
+          />
+        )
       }
     }
     if (roomBusy) {
@@ -532,6 +550,9 @@ export function App() {
         </div>
       )}
       {!showRules && body}
+      {showPro && (
+        <ProUpsell t={t} onBack={() => setShowPro(false)} />
+      )}
     </div>
   )
 }

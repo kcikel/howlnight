@@ -1,4 +1,5 @@
 import { MoonArt } from './MoonArt'
+import { ProComingSoonButton } from './ProUpsell'
 
 interface Props {
   t: (k: string) => string
@@ -24,9 +25,7 @@ export function Landing({ t, onPassPhone, onCreateRoom, onJoinRoom, onPro }: Pro
         <button class="btn btn-block" type="button" onClick={onPassPhone} style="margin-top:8px">
           {t('ctaPassPhone')}
         </button>
-        <button class="btn btn-block" type="button" onClick={onPro} style="margin-top:8px">
-          {t('ctaPro')}
-        </button>
+        <div style="margin-top:8px"><ProComingSoonButton t={t} onOpen={onPro} className="btn btn-block" /></div>
         <p class="muted" style="font-size:0.85rem;margin-bottom:0;margin-top:12px">{t('installHint')}</p>
       </div>
       <div class="panel">

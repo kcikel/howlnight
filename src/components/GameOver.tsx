@@ -2,6 +2,8 @@ import { useEffect } from 'preact/hooks'
 import type { GameState } from '../engine'
 import type { Lang } from '../i18n/messages'
 import { speakParts } from '../audio/speech'
+import { track } from '../analytics'
+import { ProComingSoonButton } from './ProUpsell'
 
 interface Props {
   state: GameState
@@ -10,15 +12,20 @@ interface Props {
   voiceOn: boolean
   onAgain: () => void
   onHome: () => void
+  onPro: () => void
 }
 
-export function GameOver({ state, lang, t, voiceOn, onAgain, onHome }: Props) {
+export function GameOver({ state, lang, t, voiceOn, onAgain, onHome, onPro }: Props) {
   const key =
     state.winner === 'wolves'
       ? 'winners_wolves'
       : state.winner === 'lovers'
         ? 'winners_lovers'
         : 'winners_village'
+
+  useEffect(() => {
+    track('game_end', { winner: state.winner ?? 'village' })
+  }, [state.winner])
 
   useEffect(() => {
     if (!voiceOn) return
@@ -52,6 +59,7 @@ export function GameOver({ state, lang, t, voiceOn, onAgain, onHome }: Props) {
       <button class="btn-primary btn-block" type="button" onClick={onAgain}>
         {t('playAgain')}
       </button>
+      <ProComingSoonButton t={t} onOpen={onPro} />
       <button class="btn btn-block" type="button" onClick={onHome}>
         {t('home')}
       </button>
