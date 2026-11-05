@@ -1,19 +1,29 @@
+import { useEffect } from 'preact/hooks'
 import type { GameState } from '../engine'
+import type { Lang } from '../i18n/messages'
+import { speakParts } from '../audio/speech'
 
 interface Props {
   state: GameState
+  lang: Lang
   t: (k: string) => string
+  voiceOn: boolean
   onAgain: () => void
   onHome: () => void
 }
 
-export function GameOver({ state, t, onAgain, onHome }: Props) {
+export function GameOver({ state, lang, t, voiceOn, onAgain, onHome }: Props) {
   const key =
     state.winner === 'wolves'
       ? 'winners_wolves'
       : state.winner === 'lovers'
         ? 'winners_lovers'
         : 'winners_village'
+
+  useEffect(() => {
+    if (!voiceOn) return
+    void speakParts([{ type: 'clip', key }], lang, t(key))
+  }, [voiceOn, lang, key, t])
 
   return (
     <div class="stack">

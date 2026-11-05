@@ -13,6 +13,7 @@ const EMOJI: Record<string, string> = {
   hunter: '🎯',
   cupid: '💘',
   spy: '👁️',
+  littlegirl: '👧',
 }
 
 interface HostProps {
@@ -23,6 +24,7 @@ interface HostProps {
   t: (k: string) => string
   voiceOn: boolean
   onLeave: () => void
+  onBackToLobby: () => void
 }
 
 interface PlayerProps {
@@ -32,6 +34,7 @@ interface PlayerProps {
   t: (k: string) => string
   voiceOn: boolean
   onLeave: () => void
+  onBackToLobby: () => void
 }
 
 type Props = HostProps | PlayerProps
@@ -47,12 +50,20 @@ export function RoomPlay(props: Props) {
   useEffect(() => {
     if (props.mode === 'host') {
       return props.session.onChange((snap) => {
+        if (snap.publicView && !snap.publicView.started && snap.publicView.phase === 'lobby') {
+          props.onBackToLobby()
+          return
+        }
         setPub(snap.publicView)
         const id = props.hostPlayerId
         setPriv(snap.privateViews[id] ?? null)
       })
     }
     return props.session.onChange((snap) => {
+      if (snap.publicView && !snap.publicView.started && snap.publicView.phase === 'lobby') {
+        props.onBackToLobby()
+        return
+      }
       setPub(snap.publicView)
       setPriv(snap.privateView)
     })
@@ -80,39 +91,91 @@ export function RoomPlay(props: Props) {
     }
   }, [props.mode])
 
-  // Host narration when night step changes
+  // Host narration for night + day phases
   useEffect(() => {
     if (props.mode !== 'host' || !voiceOn || !pub) return
-    if (pub.phase !== 'night' && pub.phase !== 'first_night_cupid') return
     const parts: SpeakPart[] = []
     let fallback = ''
-    if (pub.nightStepKind === 'intro') {
-      parts.push({ type: 'clip', key: 'nightFalls' }, { type: 'clip', key: 'everyoneSleep' })
-      fallback = `${t('nightFalls')} ${t('everyoneSleep')}`
-    } else if (pub.nightStepKind === 'done') {
-      parts.push({ type: 'clip', key: 'dawnTitle' })
-      fallback = t('dawnTitle')
-    } else if (pub.nightStepKind === 'role' && pub.nightRole) {
-      const prompts: Partial<Record<RoleId, string>> = {
-        werewolf: 'wolvesChoose',
-        seer: 'seerChoose',
-        doctor: 'doctorChoose',
-        witch: 'witchHealAsk',
-        cupid: 'cupidChoose',
-        spy: 'spyChoose',
+    if (pub.phase === 'night' || pub.phase === 'first_night_cupid') {
+      if (pub.nightStepKind === 'intro') {
+        parts.push({ type: 'clip', key: 'nightFalls' }, { type: 'clip', key: 'everyoneSleep' })
+        fallback = `${t('nightFalls')} ${t('everyoneSleep')}`
+      } else if (pub.nightStepKind === 'done') {
+        parts.push({ type: 'clip', key: 'dawnTitle' })
+        fallback = t('dawnTitle')
+      } else if (pub.nightStepKind === 'role' && pub.nightRole) {
+        const prompts: Partial<Record<RoleId, string>> = {
+          werewolf: 'wolvesChoose',
+          seer: 'seerChoose',
+          doctor: 'doctorChoose',
+          witch: 'witchHealAsk',
+          cupid: 'cupidChoose',
+          spy: 'spyChoose',
+          littlegirl: 'littlegirlChoose',
+        }
+        parts.push({ type: 'clip', key: 'wake' }, { type: 'clip', key: `role_${pub.nightRole}` })
+        const pk = prompts[pub.nightRole]
+        if (pk) parts.push({ type: 'clip', key: pk })
+        fallback = `${t('wake')} ${t(`role_${pub.nightRole}`)}`
       }
-      parts.push({ type: 'clip', key: 'wake' }, { type: 'clip', key: `role_${pub.nightRole}` })
-      const pk = prompts[pub.nightRole]
-      if (pk) parts.push({ type: 'clip', key: pk })
-      fallback = `${t('wake')} ${t(`role_${pub.nightRole}`)}`
+    } else if (pub.phase === 'dawn') {
+      parts.push({ type: 'clip', key: 'dawnTitle' })
+      if (!pub.dawnDied?.length) {
+        parts.push({ type: 'clip', key: 'nobodyDied' })
+        fallback = `${t('dawnTitle')}. ${t('nobodyDied')}`
+      } else {
+        parts.push({ type: 'clip', key: 'foundDead' })
+        for (const d of pub.dawnDied) {
+          parts.push({ type: 'text', text: d.name })
+          parts.push({ type: 'clip', key: `role_${d.role}` })
+        }
+        fallback = t('foundDead')
+      }
+    } else if (pub.phase === 'day_discuss') {
+      parts.push({ type: 'clip', key: 'discussStart' })
+      fallback = t('discussStart')
+    } else if (pub.phase === 'day_vote') {
+      parts.push({ type: 'clip', key: 'voteStart' })
+      fallback = t('voteStart')
+    } else if (pub.phase === 'elimination') {
+      if (!pub.eliminated?.length) {
+        parts.push({ type: 'clip', key: 'survivedVote' })
+        fallback = t('survivedVote')
+      } else {
+        parts.push({ type: 'clip', key: 'eliminated' })
+        for (const d of pub.eliminated) {
+          parts.push({ type: 'text', text: d.name })
+          parts.push({ type: 'clip', key: `role_${d.role}` })
+        }
+        fallback = t('eliminated')
+      }
+    } else if (pub.phase === 'hunter_revenge') {
+      parts.push({ type: 'clip', key: 'hunterShot' })
+      fallback = t('hunterShot')
+    } else if (pub.phase === 'game_over' && pub.winner) {
+      const key =
+        pub.winner === 'wolves' ? 'winners_wolves' : pub.winner === 'lovers' ? 'winners_lovers' : 'winners_village'
+      parts.push({ type: 'clip', key })
+      fallback = t(key)
     }
     if (parts.length) void speakParts(parts, lang, fallback)
-  }, [props.mode, pub?.nightStepIndex, pub?.nightStepKind, pub?.nightRole, voiceOn, lang])
+  }, [props.mode, pub?.phase, pub?.nightStepIndex, pub?.nightStepKind, pub?.nightRole, pub?.dawnDied, pub?.eliminated, pub?.winner, voiceOn, lang])
 
   useEffect(() => {
     setSelected([])
     setWitchHeal(null)
   }, [pub?.nightStepIndex, pub?.phase])
+
+  // Haptic when it's your night turn
+  useEffect(() => {
+    if (priv?.canAct && priv.alive) {
+      try {
+        navigator.vibrate?.([40, 30, 40])
+      } catch {
+        /* unsupported */
+      }
+    }
+  }, [priv?.canAct, pub?.nightStepIndex])
 
   const alive = useMemo(() => pub?.players.filter((p) => p.alive) ?? [], [pub])
 
@@ -208,6 +271,11 @@ export function RoomPlay(props: Props) {
             {t('nightStep')} {pub.nightStepIndex + 1} {t('of')} {pub.nightStepTotal}
           </p>
 
+          {showAction && (
+            <p class="muted" style="text-align:center">
+              {t('nightYourTurn')}
+            </p>
+          )}
           {showAction && priv && pub.nightRole && (
             <NightAction
               role={pub.nightRole}
@@ -475,7 +543,19 @@ export function RoomPlay(props: Props) {
             </li>
           ))}
         </ul>
-        <button class="btn-primary btn-block" type="button" onClick={props.onLeave}>
+        {props.mode === 'host' && (
+          <button
+            class="btn-primary btn-block"
+            type="button"
+            onClick={() => {
+              props.session.playAgainSameRoom()
+              props.onBackToLobby()
+            }}
+          >
+            {t('playAgainSameRoom')}
+          </button>
+        )}
+        <button class="btn btn-block" type="button" onClick={props.onLeave}>
           {t('home')}
         </button>
       </div>
@@ -601,7 +681,7 @@ function NightAction(props: {
     )
   }
 
-  if (role === 'seer' || role === 'doctor' || role === 'spy' || role === 'werewolf') {
+  if (role === 'seer' || role === 'doctor' || role === 'spy' || role === 'werewolf' || role === 'littlegirl') {
     return (
       <>
         {role === 'werewolf' && priv.wolfTeammates && (
@@ -621,6 +701,12 @@ function NightAction(props: {
             {priv.spyPeek.targetName}: {t(`role_${priv.spyPeek.role}`)}
           </p>
         )}
+        {role === 'littlegirl' && priv.littleGirlPeek && (
+          <p class="narration">
+            {priv.littleGirlPeek.targetName}{' '}
+            {priv.littleGirlPeek.isWolf ? t('visionWolf') : t('visionVillager')}
+          </p>
+        )}
         <div class="row">
           <button class="btn space" type="button" onClick={() => onSubmit({ kind: 'skip' })}>
             {t('skipAction')}
@@ -633,6 +719,7 @@ function NightAction(props: {
               if (role === 'werewolf') onSubmit({ kind: 'werewolf', targetId: selected[0] })
               else if (role === 'seer') onSubmit({ kind: 'seer', targetId: selected[0] })
               else if (role === 'doctor') onSubmit({ kind: 'doctor', targetId: selected[0] })
+              else if (role === 'littlegirl') onSubmit({ kind: 'littlegirl', targetId: selected[0] })
               else onSubmit({ kind: 'spy', targetId: selected[0] })
             }}
           >

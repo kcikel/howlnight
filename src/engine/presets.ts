@@ -27,6 +27,8 @@ export function presetForCount(playerCount: number): Partial<Record<RoleId, numb
   if (playerCount >= 9) roles.cupid = 1
   // Spy at 10+
   if (playerCount >= 10) roles.spy = 1
+  // Little Girl optional at 11+
+  if (playerCount >= 11) roles.littlegirl = 1
 
   const assigned = Object.values(roles).reduce((a, b) => a + (b ?? 0), 0)
   roles.villager = Math.max(0, playerCount - assigned)

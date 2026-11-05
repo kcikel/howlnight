@@ -148,6 +148,20 @@ export function buildPrivateView(opts: {
     }
   }
 
+  if (me.role === 'littlegirl') {
+    if (state.nightActions.littleGirlPeekTarget) {
+      const t = state.players.find((p) => p.id === state.nightActions.littleGirlPeekTarget)
+      if (t) view.littleGirlPeek = { targetName: t.name, isWolf: t.role === 'werewolf' }
+    } else if (state.littleGirlLastPeek) {
+      const t = state.players.find((p) => p.id === state.littleGirlLastPeek!.targetId)
+      if (t)
+        view.littleGirlPeek = {
+          targetName: t.name,
+          isWolf: state.littleGirlLastPeek.isWolf,
+        }
+    }
+  }
+
   return view
 }
 

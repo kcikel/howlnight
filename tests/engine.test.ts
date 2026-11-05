@@ -227,3 +227,69 @@ describe('voting & win', () => {
     expect(s.players.find((p) => p.id === other.id)!.alive).toBe(false)
   })
 })
+
+describe('little girl', () => {
+  it('is in presets at 11+', () => {
+    const p = presetForCount(11)
+    expect(p.littlegirl).toBe(1)
+    expect(totalRoles(p)).toBe(11)
+  })
+
+  it('records peek and may die when peeking a wolf', () => {
+    const state = createGame(
+      {
+        players: names(6),
+        roleCounts: { werewolf: 1, villager: 3, seer: 1, littlegirl: 1 },
+      },
+      mulberry32(99),
+    )
+    const girl = state.players.find((p) => p.role === 'littlegirl')!
+    const wolf = state.players.find((p) => p.role === 'werewolf')!
+    const villager = state.players.find((p) => p.role === 'villager' && p.id !== girl.id)!
+    let deaths = 0
+    for (let i = 0; i < 50; i++) {
+      const patched = setNightAction(state, {
+        werewolfTarget: villager.id,
+        littleGirlPeekTarget: wolf.id,
+      })
+      const resolved = resolveNight(patched)
+      expect(resolved.littleGirlLastPeek?.isWolf).toBe(true)
+      if (resolved.pendingDeaths.includes(girl.id)) deaths++
+    }
+    expect(deaths).toBeGreaterThan(0)
+    expect(deaths).toBeLessThan(50)
+  })
+
+  it('safe peek on villager never catches', () => {
+    const state = createGame(
+      {
+        players: names(6),
+        roleCounts: { werewolf: 1, villager: 3, seer: 1, littlegirl: 1 },
+      },
+      mulberry32(3),
+    )
+    const villager = state.players.find((p) => p.role === 'villager')!
+    const girl = state.players.find((p) => p.role === 'littlegirl')!
+    for (let i = 0; i < 20; i++) {
+      const patched = setNightAction(state, {
+        werewolfTarget: villager.id,
+        littleGirlPeekTarget: state.players.find((p) => p.role === 'seer')!.id,
+      })
+      const resolved = resolveNight(patched)
+      expect(resolved.littleGirlLastPeek?.isWolf).toBe(false)
+      expect(resolved.littleGirlLastPeek?.caught).toBe(false)
+      expect(resolved.pendingDeaths.includes(girl.id)).toBe(false)
+    }
+  })
+})
+
+describe('discussSeconds config', () => {
+  it('honors custom discussSeconds', () => {
+    const g = createGame({
+      players: names(4),
+      roleCounts: { werewolf: 1, villager: 2, seer: 1 },
+      discussSeconds: 60,
+    })
+    expect(g.discussSeconds).toBe(60)
+  })
+})

@@ -162,6 +162,8 @@ async function memoryFullGame(): Promise<void> {
         host.submitNightAction(actor.id, { kind: 'spy', targetId: target.id })
       } else if (step.role === 'witch') {
         host.submitNightAction(actor.id, { kind: 'skip' })
+      } else if (step.role === 'littlegirl') {
+        host.submitNightAction(actor.id, { kind: 'littlegirl', targetId: target.id })
       } else {
         host.advanceNightStep()
       }

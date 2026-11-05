@@ -32,8 +32,10 @@ NARRATOR_KEYS = [
     "role_seer",
     "role_doctor",
     "role_witch",
+    "role_hunter",
     "role_cupid",
     "role_spy",
+    "role_littlegirl",
     "wolvesChoose",
     "seerChoose",
     "doctorChoose",
@@ -41,10 +43,14 @@ NARRATOR_KEYS = [
     "witchPoisonAsk",
     "cupidChoose",
     "spyChoose",
+    "littlegirlChoose",
     "visionWolf",
     "visionVillager",
     "nobodyDied",
     "foundDead",
+    "discussStart",
+    "timeRunningOut",
+    "voteStart",
     "eliminated",
     "survivedVote",
     "hunterShot",
@@ -63,6 +69,8 @@ TEXTS = {
         "role_seer": "Seer.",
         "role_doctor": "Doctor.",
         "role_witch": "Witch.",
+        "role_hunter": "Hunter.",
+        "role_littlegirl": "Little Girl.",
         "role_cupid": "Cupid.",
         "role_spy": "Spy.",
         "wolvesChoose": "Werewolves, choose your prey.",
@@ -72,10 +80,14 @@ TEXTS = {
         "witchPoisonAsk": "Witch — use your poison on someone?",
         "cupidChoose": "Cupid, choose two lovers.",
         "spyChoose": "Spy, choose someone to peek at.",
+        "littlegirlChoose": "Little Girl — carefully peek at someone. If they are a wolf, you may be caught.",
         "visionWolf": "is a Werewolf.",
         "visionVillager": "is NOT a Werewolf.",
         "nobodyDied": "The village wakes. Nobody died tonight.",
         "foundDead": "Found dead this morning.",
+        "discussStart": "Discuss. Accuse. Defend. The village is listening.",
+        "timeRunningOut": "Time is running out.",
+        "voteStart": "It is time to vote.",
         "eliminated": "Eliminated.",
         "survivedVote": "The village could not decide.",
         "hunterShot": "Hunter — choose your dying shot.",
@@ -92,6 +104,8 @@ TEXTS = {
         "role_seer": "Vidente.",
         "role_doctor": "Doctor.",
         "role_witch": "Bruja.",
+        "role_hunter": "Cazador.",
+        "role_littlegirl": "Niña.",
         "role_cupid": "Cupido.",
         "role_spy": "Espía.",
         "wolvesChoose": "Hombres lobo, elijan a su presa.",
@@ -101,10 +115,14 @@ TEXTS = {
         "witchPoisonAsk": "Bruja — ¿usás el veneno con alguien?",
         "cupidChoose": "Cupido, elegí a dos amantes.",
         "spyChoose": "Espía, elegí a quién espiar.",
+        "littlegirlChoose": "Niña — mirá con cuidado a alguien. Si es lobo, pueden atraparte.",
         "visionWolf": "es un Hombre lobo.",
         "visionVillager": "NO es un Hombre lobo.",
         "nobodyDied": "El pueblo despierta. Nadie murió esta noche.",
         "foundDead": "Encontrados muertos esta mañana.",
+        "discussStart": "Discutan. Acusen. Defiendan. El pueblo escucha.",
+        "timeRunningOut": "Se acaba el tiempo.",
+        "voteStart": "Es hora de votar.",
         "eliminated": "Eliminado.",
         "survivedVote": "El pueblo no se puso de acuerdo.",
         "hunterShot": "Cazador — elegí tu último disparo.",
@@ -121,6 +139,8 @@ TEXTS = {
         "role_seer": "Vidente.",
         "role_doctor": "Médico.",
         "role_witch": "Bruxa.",
+        "role_hunter": "Caçador.",
+        "role_littlegirl": "Menina.",
         "role_cupid": "Cupido.",
         "role_spy": "Espião.",
         "wolvesChoose": "Lobisomens, escolham sua presa.",
@@ -130,10 +150,14 @@ TEXTS = {
         "witchPoisonAsk": "Bruxa — usar o veneno em alguém?",
         "cupidChoose": "Cupido, escolha dois amantes.",
         "spyChoose": "Espião, escolha quem espiar.",
+        "littlegirlChoose": "Menina — espie alguém com cuidado. Se for lobo, podem te pegar.",
         "visionWolf": "é um Lobisomem.",
         "visionVillager": "NÃO é um Lobisomem.",
         "nobodyDied": "A vila acorda. Ninguém morreu esta noite.",
         "foundDead": "Encontrados mortos esta manhã.",
+        "discussStart": "Discutam. Acusem. Defendan. A vila escuta.",
+        "timeRunningOut": "O tempo está acabando.",
+        "voteStart": "É hora de votar.",
         "eliminated": "Eliminado.",
         "survivedVote": "A vila não chegou a um acordo.",
         "hunterShot": "Caçador — escolha seu último tiro.",
@@ -326,7 +350,7 @@ def synth_piper(lang: str, text: str, dest: Path) -> None:
         wav.unlink(missing_ok=True)
 
 
-def run_voxcpm(only_lang: str | None, only_key: str | None, bitrate: str) -> None:
+def run_voxcpm(only_lang: str | None, only_key: str | None, bitrate: str, seed: int = 42, force: bool = False) -> None:
     import torch
     from voxcpm import VoxCPM
 
@@ -365,8 +389,13 @@ def run_voxcpm(only_lang: str | None, only_key: str | None, bitrate: str) -> Non
             text = TEXTS[lang][key]
             prompt = f"({VOXCPM_VOICES[lang]}){text}"
             dest = out_lang / f"{key}.mp3"
+            if dest.exists() and not force and only_key is None:
+                print(f"[{lang}] {key}: skip existing", flush=True)
+                size = dest.stat().st_size
+                manifest["files"][lang][key] = {"file": f"{key}.mp3", "bytes": size, "text": text, "skipped": True}
+                continue
             print(f"[{lang}] {key}: {text}", flush=True)
-            torch.manual_seed(42)  # fixed seed for consistent narrator timbre
+            torch.manual_seed(seed)  # fixed seed for consistent narrator timbre
             t1 = time.time()
             words = len(text.replace("…", " ").replace("—", " ").split())
             steps = 14 if words <= 2 else 10
@@ -453,10 +482,12 @@ def main() -> None:
     ap.add_argument("--lang", choices=("en", "es", "pt"), default=None)
     ap.add_argument("--key", default=None)
     ap.add_argument("--bitrate", default="64k")
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--force", action="store_true", help="Overwrite existing clips")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     if args.engine == "voxcpm":
-        run_voxcpm(args.lang, args.key, args.bitrate)
+        run_voxcpm(args.lang, args.key, args.bitrate, seed=args.seed, force=args.force)
     else:
         run_piper()
 

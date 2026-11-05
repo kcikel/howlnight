@@ -4,10 +4,12 @@ import type { GameConfig, GameState, NightActions, RoleId } from './types'
 import { applyHunterShot, resolveVote } from './vote'
 import { checkWin } from './win'
 
-const DEFAULT_DISCUSS = 180
+export const DEFAULT_DISCUSS = 180
+export const DISCUSS_OPTIONS = [60, 120, 180, 300] as const
 
 export function createGame(config: GameConfig, rng: () => number = Math.random): GameState {
   const players = assignRoles(config, rng)
+  const discussSeconds = config.discussSeconds ?? DEFAULT_DISCUSS
   return {
     players,
     phase: 'role_reveal',
@@ -24,7 +26,7 @@ export function createGame(config: GameConfig, rng: () => number = Math.random):
       },
     ],
     cupidDone: false,
-    discussSeconds: DEFAULT_DISCUSS,
+    discussSeconds,
   }
 }
 
@@ -47,6 +49,7 @@ export function beginNight(state: GameState): GameState {
     pendingDeaths: [],
     seerLastVision: undefined,
     spyLastPeek: undefined,
+    littleGirlLastPeek: undefined,
   }
 }
 
@@ -123,7 +126,7 @@ function finishGame(state: GameState, winner: NonNullable<GameState['winner']>):
 export function nightWakeOrder(state: GameState): RoleId[] {
   const aliveRoles = new Set(livingPlayers(state).map((p) => p.role))
   const order: { role: RoleId; order: number }[] = []
-  const defs: RoleId[] = ['cupid', 'seer', 'spy', 'werewolf', 'doctor', 'witch']
+  const defs: RoleId[] = ['cupid', 'seer', 'spy', 'werewolf', 'littlegirl', 'doctor', 'witch']
   for (const role of defs) {
     if (!aliveRoles.has(role)) continue
     if (role === 'cupid' && state.cupidDone) continue
@@ -136,9 +139,11 @@ export function nightWakeOrder(state: GameState): RoleId[] {
             ? 25
             : role === 'werewolf'
               ? 30
-              : role === 'doctor'
-                ? 40
-                : 50
+              : role === 'littlegirl'
+                ? 32
+                : role === 'doctor'
+                  ? 40
+                  : 50
     order.push({ role, order: n })
   }
   return order.sort((a, b) => a.order - b.order).map((o) => o.role)

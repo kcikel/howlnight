@@ -75,6 +75,7 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
       witch: 'witchHealAsk',
       cupid: 'cupidChoose',
       spy: 'spyChoose',
+      littlegirl: 'littlegirlChoose',
     }
     const promptKey = prompts[step.role]
     const roleKey = `role_${step.role}`
@@ -114,7 +115,7 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
 
   // Speak seer vision when a target is picked (name via Web Speech + neural suffix)
   useEffect(() => {
-    if (!voiceOn || !step || step.kind !== 'role' || step.role !== 'seer' || !selected[0]) return
+    if (!voiceOn || !step || step.kind !== 'role' || (step.role !== 'seer' && step.role !== 'littlegirl') || !selected[0]) return
     const target = state.players.find((p) => p.id === selected[0])
     if (!target) return
     const suffix = target.role === 'werewolf' ? 'visionWolf' : 'visionVillager'
@@ -193,6 +194,11 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
       advance()
       return
     }
+    if (role === 'littlegirl') {
+      if (selected[0]) onPatch({ littleGirlPeekTarget: selected[0] })
+      advance()
+      return
+    }
     if (role === 'witch') {
       const victimId = state.nightActions.werewolfTarget
       if (witchHealChoice === true && state.witch.healLeft && victimId) {
@@ -261,10 +267,10 @@ export function NightFlow({ state, lang, t, voiceOn, onPatch, onFinish }: Props)
           </>
         )}
 
-        {step.kind === 'role' && (step.role === 'seer' || step.role === 'doctor' || step.role === 'spy') && (
+        {step.kind === 'role' && (step.role === 'seer' || step.role === 'doctor' || step.role === 'spy' || step.role === 'littlegirl') && (
           <>
             {pickButtons(false, playersWithRole(state, step.role).map((p) => p.id))}
-            {step.role === 'seer' && selected[0] && (
+            {(step.role === 'seer' || step.role === 'littlegirl') && selected[0] && (
               <p class="narration">
                 {(() => {
                   const target = state.players.find((p) => p.id === selected[0])!

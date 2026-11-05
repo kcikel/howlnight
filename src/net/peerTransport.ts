@@ -65,6 +65,16 @@ export function createPeerTransport(preferredId?: string): Transport {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            // Best-effort free public TURN (no account). May fail behind some NATs/DNS.
+            {
+              urls: [
+                'turn:freeturn.net:3478',
+                'turn:freeturn.net:3478?transport=tcp',
+                'turns:freeturn.net:5349?transport=tcp',
+              ],
+              username: 'free',
+              credential: 'free',
+            },
           ],
         },
         debug: 1,
@@ -93,7 +103,7 @@ export function createPeerTransport(preferredId?: string): Transport {
       const p = await ensurePeer()
       return new Promise<ConnId>((resolve, reject) => {
         const conn = p.connect(hostId, { reliable: true })
-        const t = setTimeout(() => reject(new Error('connect timeout')), 20000)
+        const t = setTimeout(() => reject(new Error('connect timeout')), 12000)
         conn.on('open', () => {
           clearTimeout(t)
           wire(conn, false)

@@ -9,6 +9,7 @@ export type RoleId =
   | 'hunter'
   | 'cupid'
   | 'spy'
+  | 'littlegirl'
 
 export type Team = 'wolves' | 'village' | 'lovers'
 
@@ -44,6 +45,7 @@ export interface NightActions {
   spyPeekTarget?: string
   hunterRevengeTarget?: string
   cupidPair?: [string, string]
+  littleGirlPeekTarget?: string
 }
 
 export interface DayVote {
@@ -72,6 +74,7 @@ export interface LogEntry {
 export interface GameConfig {
   players: { id: string; name: string }[]
   roleCounts: Partial<Record<RoleId, number>>
+  discussSeconds?: number
 }
 
 export interface GameState {
@@ -85,6 +88,7 @@ export interface GameState {
   lastVoteVictim?: string
   seerLastVision?: { targetId: string; isWolf: boolean }
   spyLastPeek?: { targetId: string; role: RoleId }
+  littleGirlLastPeek?: { targetId: string; isWolf: boolean; caught: boolean }
   votes: DayVote[]
   log: LogEntry[]
   winner?: 'wolves' | 'village' | 'lovers'
@@ -101,6 +105,7 @@ export const ROLES: Record<RoleId, RoleDef> = {
   hunter: { id: 'hunter', team: 'village', premium: true, maxCount: 1, nightOrder: null },
   cupid: { id: 'cupid', team: 'village', premium: true, maxCount: 1, nightOrder: 10 },
   spy: { id: 'spy', team: 'village', premium: true, maxCount: 1, nightOrder: 25 },
+  littlegirl: { id: 'littlegirl', team: 'village', premium: true, maxCount: 1, nightOrder: 32 },
 }
 
-export const PREMIUM_ROLES: RoleId[] = ['witch', 'hunter', 'cupid', 'spy']
+export const PREMIUM_ROLES: RoleId[] = ['witch', 'hunter', 'cupid', 'spy', 'littlegirl']

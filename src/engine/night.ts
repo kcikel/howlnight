@@ -93,6 +93,28 @@ export function resolveNight(state: GameState): GameState {
     }
   }
 
+  // Little Girl peek — learns wolf/not-wolf; peeking a wolf risks a 40% catch (dies at dawn)
+  let littleGirlLastPeek = state.littleGirlLastPeek
+  if (actions.littleGirlPeekTarget) {
+    const target = byId(players, actions.littleGirlPeekTarget)
+    if (target) {
+      const isWolf = target.role === 'werewolf'
+      const caught = isWolf && Math.random() < 0.4
+      littleGirlLastPeek = { targetId: target.id, isWolf, caught }
+      if (caught) {
+        const girl = players.find((p) => p.role === 'littlegirl' && p.alive)
+        if (girl && !pendingDeaths.includes(girl.id)) {
+          pendingDeaths.push(girl.id)
+          log.push({
+            day,
+            kind: 'night',
+            text: `The Little Girl was caught peeking.`,
+          })
+        }
+      }
+    }
+  }
+
   return {
     ...state,
     players,
@@ -101,6 +123,7 @@ export function resolveNight(state: GameState): GameState {
     lastNightVictim,
     seerLastVision,
     spyLastPeek,
+    littleGirlLastPeek,
     nightActions: {},
     cupidDone: state.cupidDone || Boolean(actions.cupidPair),
     log,

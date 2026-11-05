@@ -14,6 +14,7 @@ const ROLE_ORDER: RoleId[] = [
   'hunter',
   'cupid',
   'spy',
+  'littlegirl',
 ]
 
 interface Props {
@@ -36,6 +37,7 @@ export function HostLobby({ session, t, onStarted, onLeave }: Props) {
   const [roleCounts, setRoleCounts] = useState(session.getSnapshot().roleCounts)
   const [hostName, setHostName] = useState(session.getHostSeat().name)
   const [copied, setCopied] = useState(false)
+  const [discussSeconds, setDiscussSeconds] = useState(() => session.getDiscussSeconds())
   const code = session.code
   const url = roomShareUrl(code)
   const n = seats.length
@@ -185,6 +187,25 @@ export function HostLobby({ session, t, onStarted, onLeave }: Props) {
         <p class="muted">
           {total} / {n}
         </p>
+      </div>
+
+      <div class="panel stack">
+        <h2>{t('discussTimer')}</h2>
+        <div class="row" style="flex-wrap:wrap;gap:8px">
+          {[60, 120, 180, 300].map((s) => (
+            <button
+              key={s}
+              type="button"
+              class={discussSeconds === s ? 'chip selected' : 'chip'}
+              onClick={() => {
+                setDiscussSeconds(s)
+                session.setDiscussSeconds(s)
+              }}
+            >
+              {Math.floor(s / 60)}m
+            </button>
+          ))}
+        </div>
       </div>
 
       <div class="footer-cta">

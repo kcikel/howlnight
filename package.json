@@ -14,6 +14,7 @@
     "test:e2e": "tsx tests/e2e/rooms.e2e.ts"
   },
   "dependencies": {
+    "nostr-tools": "^2.25.5",
     "peerjs": "^1.5.5",
     "preact": "^11.1.1",
     "qrcode": "^1.5.4"

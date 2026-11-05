@@ -10,6 +10,7 @@ import {
   VoteScreen,
 } from './components/DayFlow'
 import { GameOver } from './components/GameOver'
+import { RulesHelp } from './components/RulesHelp'
 import { Landing } from './components/Landing'
 import { NightFlow } from './components/NightFlow'
 import { newPlayer, PlayerSetup, type SetupPlayer } from './components/PlayerSetup'
@@ -35,7 +36,7 @@ import {
   type Player,
 } from './engine'
 import {
-  createPeerTransport,
+  createHybridTransport,
   generateRoomCode,
   hostPeerId,
   HostSession,
@@ -77,6 +78,8 @@ export function App() {
   const [joinCode, setJoinCode] = useState(() => readRoomParam() ?? '')
   const [players, setPlayers] = useState<SetupPlayer[]>(defaultPlayers)
   const [roleCounts, setRoleCounts] = useState(() => presetForCount(6))
+  const [discussSeconds, setDiscussSeconds] = useState(180)
+  const [showRules, setShowRules] = useState(false)
   const [game, setGame] = useState<GameState | null>(null)
   const [voiceOn, setVoiceOn] = useState(() => !isSpeechMuted())
   const [dawnDied, setDawnDied] = useState<Player[]>([])
@@ -112,8 +115,10 @@ export function App() {
       'role_seer',
       'role_doctor',
       'role_witch',
+      'role_hunter',
       'role_cupid',
       'role_spy',
+      'role_littlegirl',
       'wolvesChoose',
       'seerChoose',
       'doctorChoose',
@@ -121,8 +126,20 @@ export function App() {
       'witchPoisonAsk',
       'cupidChoose',
       'spyChoose',
+      'littlegirlChoose',
       'visionWolf',
       'visionVillager',
+      'nobodyDied',
+      'foundDead',
+      'discussStart',
+      'timeRunningOut',
+      'voteStart',
+      'eliminated',
+      'survivedVote',
+      'hunterShot',
+      'winners_wolves',
+      'winners_village',
+      'winners_lovers',
     ])
   }, [lang, voiceOn])
 
@@ -137,6 +154,7 @@ export function App() {
     const g = createGame({
       players: players.map((p) => ({ id: p.id, name: p.name.trim() })),
       roleCounts,
+      discussSeconds,
     })
     setGame(g)
     setScreen('reveal')
@@ -196,7 +214,7 @@ export function App() {
     setRoomError('')
     try {
       let code = generateRoomCode()
-      let transport = createPeerTransport()
+      let transport = createHybridTransport(code)
       let attempts = 0
       while (attempts < 5) {
         try {
@@ -205,7 +223,7 @@ export function App() {
         } catch {
           transport.destroy()
           code = generateRoomCode()
-          transport = createPeerTransport()
+          transport = createHybridTransport(code)
           attempts++
         }
       }
@@ -250,9 +268,11 @@ export function App() {
         <PlayerSetup
           players={players}
           roleCounts={roleCounts}
+          discussSeconds={discussSeconds}
           t={t}
           onChangePlayers={setPlayers}
           onChangeRoles={setRoleCounts}
+          onChangeDiscuss={setDiscussSeconds}
           onContinue={startReveal}
           onBack={() => setScreen('landing')}
         />
@@ -307,6 +327,7 @@ export function App() {
           t={t}
           voiceOn={voiceOn}
           onLeave={goHome}
+          onBackToLobby={() => setScreen('host_lobby')}
         />
       )
     }
@@ -319,6 +340,7 @@ export function App() {
           t={t}
           voiceOn={voiceOn}
           onLeave={goHome}
+          onBackToLobby={() => setScreen('player_lobby')}
         />
       )
     }
@@ -340,7 +362,9 @@ export function App() {
           <DawnScreen
             state={game}
             died={dawnDied}
+            lang={lang}
             t={t}
+            voiceOn={voiceOn}
             onContinue={() => setGame((g) => (g ? startDayDiscuss(g) : g))}
           />
         )
@@ -349,7 +373,9 @@ export function App() {
         return (
           <DiscussScreen
             seconds={game.discussSeconds}
+            lang={lang}
             t={t}
+            voiceOn={voiceOn}
             onVote={() => setGame((g) => (g ? startDayVote(g) : g))}
           />
         )
@@ -358,7 +384,9 @@ export function App() {
         return (
           <VoteScreen
             state={game}
+            lang={lang}
             t={t}
+            voiceOn={voiceOn}
             onCast={(voterId, targetId) =>
               setGame((g) => (g ? castVote(g, voterId, targetId) : g))
             }
@@ -380,7 +408,9 @@ export function App() {
         return (
           <HunterRevenge
             state={game}
+            lang={lang}
             t={t}
+            voiceOn={voiceOn}
             onShoot={(id) =>
               setGame((g) => {
                 if (!g) return g
@@ -408,7 +438,9 @@ export function App() {
           <EliminationScreen
             eliminated={lastEliminated}
             extras={elimExtras}
+            lang={lang}
             t={t}
+            voiceOn={voiceOn}
             onContinue={() => {
               setGame((g) => {
                 if (!g) return g
@@ -420,7 +452,7 @@ export function App() {
         )
       }
       if (phase === 'game_over') {
-        return <GameOver state={game} t={t} onAgain={resetToSetup} onHome={goHome} />
+        return <GameOver state={game} lang={lang} t={t} voiceOn={voiceOn} onAgain={resetToSetup} onHome={goHome} />
       }
     }
     if (roomBusy) {
@@ -486,12 +518,20 @@ export function App() {
               </option>
             ))}
           </select>
+          <button class="chip" type="button" onClick={() => setShowRules(true)} title={t('rulesHelp')}>
+            ?
+          </button>
           <button class="chip" type="button" onClick={toggleVoice}>
             {voiceOn ? '🔊' : '🔇'}
           </button>
         </div>
       </header>
-      {body}
+      {showRules && (
+        <div class="stack" style="margin:12px">
+          <RulesHelp t={t} onClose={() => setShowRules(false)} />
+        </div>
+      )}
+      {!showRules && body}
     </div>
   )
 }

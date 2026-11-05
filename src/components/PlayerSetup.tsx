@@ -10,6 +10,7 @@ const ROLE_ORDER: RoleId[] = [
   'hunter',
   'cupid',
   'spy',
+  'littlegirl',
 ]
 
 export interface SetupPlayer {
@@ -20,9 +21,11 @@ export interface SetupPlayer {
 interface Props {
   players: SetupPlayer[]
   roleCounts: Partial<Record<RoleId, number>>
+  discussSeconds: number
   t: (k: string) => string
   onChangePlayers: (p: SetupPlayer[]) => void
   onChangeRoles: (r: Partial<Record<RoleId, number>>) => void
+  onChangeDiscuss: (s: number) => void
   onContinue: () => void
   onBack: () => void
 }
@@ -35,9 +38,11 @@ export function newPlayer(name = ''): SetupPlayer {
 export function PlayerSetup({
   players,
   roleCounts,
+  discussSeconds,
   t,
   onChangePlayers,
   onChangeRoles,
+  onChangeDiscuss,
   onContinue,
   onBack,
 }: Props) {
@@ -140,6 +145,22 @@ export function PlayerSetup({
         <p class="muted">
           {total} / {n} {total !== n ? `— ${t('roleMismatch')}` : ''}
         </p>
+      </div>
+
+      <div class="panel stack">
+        <h2>{t('discussTimer')}</h2>
+        <div class="row" style="flex-wrap:wrap;gap:8px">
+          {[60, 120, 180, 300].map((s) => (
+            <button
+              key={s}
+              type="button"
+              class={discussSeconds === s ? 'chip selected' : 'chip'}
+              onClick={() => onChangeDiscuss(s)}
+            >
+              {Math.floor(s / 60)}m
+            </button>
+          ))}
+        </div>
       </div>
 
       <div class="footer-cta">

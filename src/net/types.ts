@@ -9,6 +9,7 @@ export type NightActionPayload =
   | { kind: 'doctor'; targetId?: string }
   | { kind: 'spy'; targetId?: string }
   | { kind: 'witch'; heal?: boolean; poisonTargetId?: string }
+  | { kind: 'littlegirl'; targetId?: string }
   | { kind: 'skip' }
 
 export interface LobbySeat {
@@ -57,6 +58,7 @@ export interface PrivateGameView {
   loverName?: string
   seerVision?: { targetName: string; isWolf: boolean }
   spyPeek?: { targetName: string; role: RoleId }
+  littleGirlPeek?: { targetName: string; isWolf: boolean }
   witch?: { healLeft: boolean; poisonLeft: boolean; victimName?: string }
   /** True when this player should see the night action UI for the current step. */
   canAct: boolean
@@ -102,6 +104,8 @@ export function nightActionToPatch(action: NightActionPayload): Partial<NightAct
         witchHeal: action.heal,
         witchPoisonTarget: action.poisonTargetId,
       }
+    case 'littlegirl':
+      return { littleGirlPeekTarget: action.targetId }
     case 'skip':
       return {}
   }

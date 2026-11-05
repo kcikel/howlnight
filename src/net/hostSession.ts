@@ -49,6 +49,7 @@ export interface HostSessionSnapshot {
   discussEndsAt?: number
   discussPaused: boolean
   started: boolean
+  discussSecondsPref?: number
 }
 
 export type HostListener = (snap: {
@@ -75,6 +76,7 @@ export class HostSession {
   private discussEndsAt?: number
   private discussPaused = false
   private started = false
+  private discussSecondsPref = 180
   private listeners: HostListener[] = []
   private connToPlayer = new Map<string, string>()
 
@@ -100,6 +102,7 @@ export class HostSession {
       this.discussEndsAt = r.discussEndsAt
       this.discussPaused = r.discussPaused
       this.started = r.started
+      this.discussSecondsPref = r.discussSecondsPref ?? 180
     } else {
       this.salt = randomSaltB64()
       this.roleCounts = presetForCount(4)
@@ -165,6 +168,7 @@ export class HostSession {
       discussEndsAt: this.discussEndsAt,
       discussPaused: this.discussPaused,
       started: this.started,
+      discussSecondsPref: this.discussSecondsPref,
     }
   }
 
@@ -181,6 +185,33 @@ export class HostSession {
     this.roleCounts = counts
     this.persist()
     this.emit()
+  }
+
+  setDiscussSeconds(seconds: number) {
+    if (this.started) return
+    this.discussSecondsPref = Math.max(30, Math.min(600, Math.floor(seconds)))
+    this.persist()
+    this.emit()
+  }
+
+  getDiscussSeconds() {
+    return this.discussSecondsPref
+  }
+
+  /** Reset game state but keep seats/connections — play another round in the same room. */
+  playAgainSameRoom() {
+    if (!this.started) return
+    this.game = null
+    this.nightStepIndex = 0
+    this.revealed = {}
+    this.dawnDied = undefined
+    this.eliminated = undefined
+    this.discussEndsAt = undefined
+    this.discussPaused = false
+    this.started = false
+    this.persist()
+    this.emit()
+    void this.broadcastLobby()
   }
 
   kick(playerId: string) {
@@ -214,6 +245,7 @@ export class HostSession {
       {
         players: this.seats.map((s) => ({ id: s.id, name: s.name })),
         roleCounts: this.roleCounts,
+        discussSeconds: this.discussSecondsPref,
       },
       rng,
     )
@@ -625,13 +657,14 @@ export class HostSession {
   }
 
   private async broadcastState() {
-    if (!this.game) {
+    const game = this.game
+    if (!game) {
       await this.broadcastLobby()
       return
     }
     const connected = this.connectedIds()
     const pub = buildPublicView({
-      state: this.game,
+      state: game,
       connected,
       nightStepIndex: this.nightStepIndex,
       discussEndsAt: this.discussEndsAt,
@@ -643,7 +676,7 @@ export class HostSession {
     for (const s of this.seats) {
       if (!s.connId && !s.isHost) continue
       const priv = buildPrivateView({
-        state: this.game,
+        state: game,
         playerId: s.id,
         isHost: s.isHost,
         nightStepIndex: this.nightStepIndex,

@@ -231,3 +231,37 @@ describe('buildNightSteps', () => {
     expect(steps[steps.length - 1].kind).toBe('done')
   })
 })
+
+
+describe('littlegirl + playAgain', () => {
+  it('nightActionToPatch supports littlegirl', () => {
+    expect(nightActionToPatch({ kind: 'littlegirl', targetId: 'p1' })).toEqual({
+      littleGirlPeekTarget: 'p1',
+    })
+  })
+
+  it('playAgainSameRoom returns to lobby without dropping seats', async () => {
+    const code = 'PLAY'
+    const hostT = createMemoryTransport()
+    await hostT.startHost(hostPeerId(code))
+    const host = new HostSession(hostT, code, { hostName: 'H', hostToken: 'ht' })
+    await host.init()
+
+    const players: PlayerSession[] = []
+    for (let i = 0; i < 3; i++) {
+      const pt = createMemoryTransport()
+      const ps = new PlayerSession(pt, code, { name: `P${i}`, token: `t${i}` })
+      await ps.connect(hostPeerId(code))
+      players.push(ps)
+    }
+    await new Promise((r) => setTimeout(r, 50))
+    expect(host.canStart()).toBe(true)
+    host.setRoleCounts(presetForCount(4))
+    host.startGame(mulberry32(1))
+    expect(host.getSnapshot().started).toBe(true)
+    host.playAgainSameRoom()
+    expect(host.getSnapshot().started).toBe(false)
+    expect(host.getSnapshot().game).toBeNull()
+    expect(host.getSnapshot().seats).toHaveLength(4)
+  })
+})

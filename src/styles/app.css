@@ -344,3 +344,12 @@ a { color: var(--moon); }
 .night-screen {
   min-height: 320px;
 }
+
+
+.chip.selected, button.chip.selected {
+  background: var(--crimson, #b33);
+  color: #fff;
+  border-color: transparent;
+}
+.night-screen { min-height: 280px; }
+

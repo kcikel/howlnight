@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import {
-  createPeerTransport,
+  createHybridTransport,
   hostPeerId,
   isValidRoomCode,
   normalizeRoomCode,
@@ -33,14 +33,19 @@ export function JoinRoom({ t, initialCode = '', createAndConnect, onReady, onBac
       if (createAndConnect) {
         s = await createAndConnect(c, name.trim())
       } else {
-        const transport = createPeerTransport()
+        const transport = createHybridTransport(c)
         s = new PlayerSession(transport, c, { name: name.trim() })
         await s.connect(hostPeerId(c))
       }
       onReady(s)
     } catch (e) {
       setStatus('error')
-      setError(e instanceof Error ? e.message : t('joinFailed'))
+      const raw = e instanceof Error ? e.message : ''
+      if (raw.startsWith('NEED_SAME_WIFI') || /timeout|failed/i.test(raw)) {
+        setError(t('needSameWifi'))
+      } else {
+        setError(raw || t('joinFailed'))
+      }
     }
   }
 
