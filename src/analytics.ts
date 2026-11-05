@@ -36,6 +36,11 @@ function ensureGoatCounter(): void {
     s.id = 'gc-script'
     s.async = true
     s.dataset.goatcounter = GOATCOUNTER_ENDPOINT
+    // GoatCounter ignores localhost unless allow_local is set (prod unchanged).
+    const host = location.hostname
+    if (host === 'localhost' || host === '127.0.0.1') {
+      s.dataset.goatcounterSettings = JSON.stringify({ allow_local: true })
+    }
     s.src = 'https://gc.zgo.at/count.js'
     // Ad blockers / offline: failed load must not break the app
     s.onerror = () => {
