@@ -536,11 +536,10 @@
       },
       "role_hunter": {
         "file": "role_hunter.mp3",
-        "bytes": 6521,
+        "bytes": 6103,
         "text": "Hunter.",
-        "gen_seconds": 2.88,
-        "raw_duration": 0.96,
-        "peak": 0.8388
+        "seed": 44,
+        "asr": "Hunter"
       },
       "role_cupid": {
         "file": "role_cupid.mp3",
