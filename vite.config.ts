@@ -41,7 +41,17 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,mp3,json}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: '/index.html',
+        // Never cache analytics; NetworkOnly so offline/ad-block failures stay
+        // out of the SW cache and do not break app shell offline mode.
         runtimeCaching: [
+          {
+            urlPattern: /^https?:\/\/gc\.zgo\.at\//i,
+            handler: 'NetworkOnly',
+          },
+          {
+            urlPattern: /^https?:\/\/[^/]*goatcounter\.com\//i,
+            handler: 'NetworkOnly',
+          },
           {
             urlPattern: /\/voice\/.*\.mp3$/,
             handler: 'CacheFirst',

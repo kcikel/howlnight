@@ -2,7 +2,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   getEventCounts,
+  GOATCOUNTER_ENDPOINT,
   GOATCOUNTER_SITE_CODE,
+  initAnalytics,
   recordProInterest,
   resetEventCounts,
   track,
@@ -12,14 +14,30 @@ describe('analytics', () => {
   beforeEach(() => {
     resetEventCounts()
     localStorage.clear()
+    document.getElementById('gc-script')?.remove()
   })
 
-  it('is a no-op sink until GoatCounter code is set', () => {
-    expect(GOATCOUNTER_SITE_CODE).toBeNull()
+  it('has GoatCounter site code set for production', () => {
+    expect(GOATCOUNTER_SITE_CODE).toBe('howlnight')
+    expect(GOATCOUNTER_ENDPOINT).toBe('https://howlnight.goatcounter.com/count')
+  })
+
+  it('keeps local in-memory counters regardless of GoatCounter', () => {
     track('pro_click')
     track('pro_click')
     track('game_start')
     expect(getEventCounts()).toEqual({ pro_click: 2, game_start: 1 })
+  })
+
+  it('injects GoatCounter script on init for pageviews', () => {
+    initAnalytics()
+    const s = document.getElementById('gc-script') as HTMLScriptElement | null
+    expect(s).toBeTruthy()
+    expect(s!.dataset.goatcounter).toBe('https://howlnight.goatcounter.com/count')
+    expect(s!.src).toContain('gc.zgo.at/count.js')
+    // idempotent
+    initAnalytics()
+    expect(document.querySelectorAll('#gc-script').length).toBe(1)
   })
 
   it('records pro interest locally without email', () => {

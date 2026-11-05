@@ -1,14 +1,14 @@
 /**
  * Lightweight analytics hook.
  *
- * GoatCounter: set GOATCOUNTER_SITE_CODE below (e.g. 'howlnight') once the
- * account exists. Until then every track() is a local no-op that still
- * increments in-memory counters (useful for tests / debugging).
- *
- * One-line enable later:
- *   export const GOATCOUNTER_SITE_CODE: string | null = 'howlnight'
+ * GoatCounter site code 'howlnight' — active in production builds.
+ * track() also keeps in-memory counters for tests / debugging.
+ * Script inject is lazy + idempotent; initAnalytics() loads it on boot
+ * so GoatCounter records a pageview without waiting for the first event.
  */
-export const GOATCOUNTER_SITE_CODE: string | null = null
+export const GOATCOUNTER_SITE_CODE: string | null = 'howlnight'
+/** Full count endpoint (committed; not secret). Kept as a plain string so builds retain the hostname. */
+export const GOATCOUNTER_ENDPOINT = 'https://howlnight.goatcounter.com/count'
 
 export type AnalyticsEvent =
   | 'pro_click'
@@ -23,6 +23,35 @@ const counts: Record<string, number> = Object.create(null)
 
 const INTEREST_KEY = 'howlnight_pro_interest'
 
+type GoatWindow = Window & {
+  goatcounter?: { count: (o: { path: string; title?: string; event?: boolean }) => void }
+}
+
+function ensureGoatCounter(): void {
+  const code = GOATCOUNTER_SITE_CODE
+  if (!code || typeof window === 'undefined' || typeof document === 'undefined') return
+  if (document.getElementById('gc-script')) return
+  try {
+    const s = document.createElement('script')
+    s.id = 'gc-script'
+    s.async = true
+    s.dataset.goatcounter = GOATCOUNTER_ENDPOINT
+    s.src = '//gc.zgo.at/count.js'
+    // Ad blockers / offline: failed load must not break the app
+    s.onerror = () => {
+      /* ignore */
+    }
+    document.head.appendChild(s)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Inject GoatCounter so pageviews count on first paint. Safe no-op if blocked. */
+export function initAnalytics(): void {
+  ensureGoatCounter()
+}
+
 export function track(event: AnalyticsEvent, props?: Record<string, string | number | boolean>): void {
   counts[event] = (counts[event] ?? 0) + 1
   if (typeof window === 'undefined') return
@@ -31,18 +60,8 @@ export function track(event: AnalyticsEvent, props?: Record<string, string | num
   if (!code) return
 
   try {
-    const w = window as Window & {
-      goatcounter?: { count: (o: { path: string; title?: string; event?: boolean }) => void }
-    }
-    // Lazy-inject GoatCounter script once
-    if (!document.getElementById('gc-script')) {
-      const s = document.createElement('script')
-      s.id = 'gc-script'
-      s.async = true
-      s.dataset.goatcounter = `https://${code}.goatcounter.com/count`
-      s.src = '//gc.zgo.at/count.js'
-      document.head.appendChild(s)
-    }
+    ensureGoatCounter()
+    const w = window as GoatWindow
     const path = `event:${event}`
     const title = props ? `${event} ${JSON.stringify(props)}` : event
     const fire = () => w.goatcounter?.count({ path, title, event: true })
