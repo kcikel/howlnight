@@ -15,6 +15,9 @@ import { NightFlow } from './components/NightFlow'
 import { newPlayer, PlayerSetup, type SetupPlayer } from './components/PlayerSetup'
 import { ProUpsell } from './components/ProUpsell'
 import { RoleReveal } from './components/RoleReveal'
+import { HostLobby } from './components/room/HostLobby'
+import { JoinRoom, PlayerLobby } from './components/room/JoinRoom'
+import { RoomPlay } from './components/room/RoomPlay'
 import {
   beginNight,
   castVote,
@@ -31,18 +34,47 @@ import {
   type NightActions,
   type Player,
 } from './engine'
+import {
+  createPeerTransport,
+  generateRoomCode,
+  hostPeerId,
+  HostSession,
+  isValidRoomCode,
+  normalizeRoomCode,
+  PlayerSession,
+  randomToken,
+} from './net'
 import { useI18n } from './hooks/useI18n'
 import type { Lang } from './i18n/messages'
 
-type Screen = 'landing' | 'setup' | 'reveal' | 'play' | 'pro'
+type Screen =
+  | 'landing'
+  | 'setup'
+  | 'reveal'
+  | 'play'
+  | 'pro'
+  | 'host_lobby'
+  | 'host_play'
+  | 'join'
+  | 'player_lobby'
+  | 'player_play'
 
 function defaultPlayers(): SetupPlayer[] {
   return [1, 2, 3, 4, 5, 6].map((i) => newPlayer(`Player ${i}`))
 }
 
+function readRoomParam(): string | null {
+  if (typeof location === 'undefined') return null
+  const q = new URLSearchParams(location.search).get('room')
+  if (!q) return null
+  const code = normalizeRoomCode(q)
+  return isValidRoomCode(code) ? code : null
+}
+
 export function App() {
   const { lang, setLang, t, LANG_LABELS } = useI18n()
-  const [screen, setScreen] = useState<Screen>('landing')
+  const [screen, setScreen] = useState<Screen>(() => (readRoomParam() ? 'join' : 'landing'))
+  const [joinCode, setJoinCode] = useState(() => readRoomParam() ?? '')
   const [players, setPlayers] = useState<SetupPlayer[]>(defaultPlayers)
   const [roleCounts, setRoleCounts] = useState(() => presetForCount(6))
   const [game, setGame] = useState<GameState | null>(null)
@@ -50,6 +82,10 @@ export function App() {
   const [dawnDied, setDawnDied] = useState<Player[]>([])
   const [lastEliminated, setLastEliminated] = useState<Player | undefined>()
   const [elimExtras, setElimExtras] = useState<Player[]>([])
+  const [hostSession, setHostSession] = useState<HostSession | null>(null)
+  const [playerSession, setPlayerSession] = useState<PlayerSession | null>(null)
+  const [roomBusy, setRoomBusy] = useState(false)
+  const [roomError, setRoomError] = useState('')
 
   useEffect(() => {
     document.title = t('seoTitle')
@@ -136,18 +172,75 @@ export function App() {
     setDawnDied([])
   }
 
+  const tearDownRooms = () => {
+    hostSession?.destroy()
+    playerSession?.destroy()
+    setHostSession(null)
+    setPlayerSession(null)
+  }
+
   const goHome = () => {
     stopSpeaking()
     stopAmbient()
     setGame(null)
+    tearDownRooms()
     setScreen('landing')
+    setRoomError('')
+    if (typeof history !== 'undefined' && location.search.includes('room=')) {
+      history.replaceState({}, '', `${location.pathname}`)
+    }
+  }
+
+  const createRoom = async () => {
+    setRoomBusy(true)
+    setRoomError('')
+    try {
+      let code = generateRoomCode()
+      let transport = createPeerTransport()
+      let attempts = 0
+      while (attempts < 5) {
+        try {
+          await transport.startHost(hostPeerId(code))
+          break
+        } catch {
+          transport.destroy()
+          code = generateRoomCode()
+          transport = createPeerTransport()
+          attempts++
+        }
+      }
+      if (attempts >= 5) throw new Error('Could not claim room code')
+      const session = new HostSession(transport, code, {
+        hostName: 'Host',
+        hostToken: randomToken(),
+      })
+      await session.init()
+      setHostSession(session)
+      setScreen('host_lobby')
+      startAmbient()
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : t('joinFailed'))
+    } finally {
+      setRoomBusy(false)
+    }
   }
 
   const phase = game?.phase
 
   const body = useMemo(() => {
     if (screen === 'landing') {
-      return <Landing t={t} onStart={() => setScreen('setup')} onPro={() => setScreen('pro')} />
+      return (
+        <Landing
+          t={t}
+          onPassPhone={() => setScreen('setup')}
+          onCreateRoom={() => void createRoom()}
+          onJoinRoom={() => {
+            setJoinCode('')
+            setScreen('join')
+          }}
+          onPro={() => setScreen('pro')}
+        />
+      )
     }
     if (screen === 'pro') {
       return <ProUpsell t={t} onBack={() => setScreen('landing')} />
@@ -167,6 +260,67 @@ export function App() {
     }
     if (screen === 'reveal' && game) {
       return <RoleReveal players={game.players} t={t} onDone={startPlay} />
+    }
+    if (screen === 'join') {
+      return (
+        <JoinRoom
+          t={t}
+          initialCode={joinCode}
+          onReady={(s) => {
+            setPlayerSession(s)
+            setScreen('player_lobby')
+            startAmbient()
+          }}
+          onBack={goHome}
+        />
+      )
+    }
+    if (screen === 'host_lobby' && hostSession) {
+      return (
+        <HostLobby
+          session={hostSession}
+          t={t}
+          onStarted={() => {
+            setScreen('host_play')
+          }}
+          onLeave={goHome}
+        />
+      )
+    }
+    if (screen === 'player_lobby' && playerSession) {
+      return (
+        <PlayerLobby
+          session={playerSession}
+          t={t}
+          onStarted={() => setScreen('player_play')}
+          onLeave={goHome}
+        />
+      )
+    }
+    if (screen === 'host_play' && hostSession) {
+      return (
+        <RoomPlay
+          mode="host"
+          session={hostSession}
+          hostPlayerId={hostSession.getHostSeat().id}
+          lang={lang}
+          t={t}
+          voiceOn={voiceOn}
+          onLeave={goHome}
+        />
+      )
+    }
+    if (screen === 'player_play' && playerSession) {
+      return (
+        <RoomPlay
+          mode="player"
+          session={playerSession}
+          lang={lang}
+          t={t}
+          voiceOn={voiceOn}
+          onLeave={goHome}
+        />
+      )
     }
     if (screen === 'play' && game) {
       if (phase === 'first_night_cupid' || phase === 'night') {
@@ -269,6 +423,23 @@ export function App() {
         return <GameOver state={game} t={t} onAgain={resetToSetup} onHome={goHome} />
       }
     }
+    if (roomBusy) {
+      return (
+        <div class="panel">
+          <p class="muted">{t('creatingRoom')}</p>
+        </div>
+      )
+    }
+    if (roomError) {
+      return (
+        <div class="panel stack">
+          <p style="color:var(--crimson)">{roomError}</p>
+          <button class="btn" type="button" onClick={goHome}>
+            {t('home')}
+          </button>
+        </div>
+      )
+    }
     return null
   }, [
     screen,
@@ -283,6 +454,11 @@ export function App() {
     lastEliminated,
     elimExtras,
     patchNight,
+    hostSession,
+    playerSession,
+    joinCode,
+    roomBusy,
+    roomError,
   ])
 
   return (

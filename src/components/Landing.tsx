@@ -2,19 +2,27 @@ import { MoonArt } from './MoonArt'
 
 interface Props {
   t: (k: string) => string
-  onStart: () => void
+  onPassPhone: () => void
+  onCreateRoom: () => void
+  onJoinRoom: () => void
   onPro: () => void
 }
 
-export function Landing({ t, onStart, onPro }: Props) {
+export function Landing({ t, onPassPhone, onCreateRoom, onJoinRoom, onPro }: Props) {
   return (
     <div class="stack">
       <div class="panel">
         <MoonArt />
         <h1 style="font-size:1.55rem;margin-top:0">{t('landingTitle')}</h1>
         <p class="lead">{t('landingBody')}</p>
-        <button class="btn-primary btn-block" type="button" onClick={onStart} style="margin-top:8px">
-          {t('ctaStart')}
+        <button class="btn-primary btn-block" type="button" onClick={onCreateRoom} style="margin-top:8px">
+          {t('ctaCreateRoom')}
+        </button>
+        <button class="btn btn-block" type="button" onClick={onJoinRoom} style="margin-top:8px">
+          {t('ctaJoinRoom')}
+        </button>
+        <button class="btn btn-block" type="button" onClick={onPassPhone} style="margin-top:8px">
+          {t('ctaPassPhone')}
         </button>
         <button class="btn btn-block" type="button" onClick={onPro} style="margin-top:8px">
           {t('ctaPro')}

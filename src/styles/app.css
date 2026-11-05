@@ -311,3 +311,36 @@ a { color: var(--moon); }
 }
 .tag-alive { background: rgba(62, 207, 142, 0.15); color: var(--forest); }
 .tag-dead { background: rgba(224, 69, 90, 0.15); color: var(--crimson); }
+
+.room-code {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  text-align: center;
+  color: var(--moon);
+  font-variant-numeric: tabular-nums;
+  padding: 8px 0 4px;
+}
+.room-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  outline: none;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1.1rem;
+}
+.room-input:focus { border-color: var(--wolf); }
+.qr-box {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  display: block;
+}
+.night-screen {
+  min-height: 320px;
+}
